@@ -1,7 +1,14 @@
 import React from 'react';
 import {Layout, Menu} from 'antd'
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link
+  } from "react-router-dom";
 
-import './sidebar.css'
+import './Sidebar.css'
+
 import {
     UserOutlined,
     VideoCameraOutlined,
@@ -9,22 +16,28 @@ import {
 } from '@ant-design/icons';
 
 const {Sider} = Layout
+
 const AppSideBar = props =>{
     return(
-        <Sider trigger={null} className="sidebar-container">
-            <div className="logo" />
-            <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
-                <Menu.Item key="1" icon={<UserOutlined />}>
-                    Customer
-                </Menu.Item>
-                <Menu.Item key="2" icon={<VideoCameraOutlined />}>
-                    Product
-                </Menu.Item>
-                <Menu.Item key="3" icon={<UploadOutlined />}>
-                    Order
-                </Menu.Item>
-            </Menu>
-        </Sider>
+        <Router>
+            <Sider trigger={null} className="sidebar-container">
+                <div className="logo" />
+                <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
+                    <Menu.Item key="1" icon={<UserOutlined />}>
+                        {/* Customer */}
+                        <Link to="/customer">Customer</Link>
+                    </Menu.Item>
+                    <Menu.Item key="2" icon={<VideoCameraOutlined />}>
+                        Product
+                        {/* <Link to="/product">Product</Link> */}
+                    </Menu.Item>
+                    <Menu.Item key="3" icon={<UploadOutlined />}>
+                        Order
+                        {/* <Link to="/order">Order</Link> */}
+                    </Menu.Item>
+                </Menu>
+            </Sider>
+        </Router>
     )
 }
 

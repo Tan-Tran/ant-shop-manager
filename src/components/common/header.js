@@ -1,10 +1,10 @@
 import React from "react"
-import './header.css'
+import './Header.css'
 
 const AppHeader = props =>{
     return (
         <div className="container">
-            <h1>Shop Manager</h1>
+            <h1>Shop Management</h1>
         </div>
     )
 }
