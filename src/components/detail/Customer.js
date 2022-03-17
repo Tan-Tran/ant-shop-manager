@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {Table, Button, Space} from 'antd'
-import UpdateCustomer from '../pages/UpdateCustomer';
+import AddCustomer from '../pages/AddCustomer';
 
 import 'antd/dist/antd.css'
 
@@ -40,17 +40,17 @@ const Customer = props =>{
 
 
 
-    const handleAdd = () =>{
-        // const newCustomerDefault ={
-        //     key: numberOfCustomer,
-        //     name: 'New Customer',
-        //     age: '--',
-        //     address: '--',
-        //     dateOfBirth: '--/--/----',
-        // }
-        // const dataSource = [...data, newCustomerDefault];
-        // setData(dataSource)
-        // setNumberOfCustomer(numberOfCustomer+1)
+    const handleAdd = (values) =>{
+        const newCustomer ={
+            key: numberOfCustomer,
+            name: values.user.name,
+            age: values.user.age,
+            address: values.user.address,
+            dateOfBirth: values.user.birth['_d'].toLocaleDateString('en-GB'),
+        }
+        const dataSource = [...data, newCustomer];
+        setData(dataSource)
+        setNumberOfCustomer(numberOfCustomer+1)
 
     }
 
@@ -83,7 +83,7 @@ const Customer = props =>{
     return (
         <>
             <div style={{float:'right'}}>
-                <UpdateCustomer/>
+                <AddCustomer handleAdd={handleAdd}/>
             </div>
             <Table dataSource={data} bordered columns={columns}/>
         </>
