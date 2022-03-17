@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import {Table, Button, Space} from 'antd'
-import AddCustomer from '../pages/AddCustomer';
+import AddCustomer from '../common/AddCustomer';
+import UpdateCustomer from '../common/UpdateCustomer';
+
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link,
+    Redirect
+} from "react-router-dom";
 
 import 'antd/dist/antd.css'
 
@@ -35,22 +44,27 @@ const Customer = props =>{
     const[numberOfCustomer, setNumberOfCustomer] = useState(dataSource.length)
 
     const handleUpdate = (record) =>{
-        console.log(record)
+        const newData = [...data]
+        const index = newData.findIndex(item => record.key === item.key)
+        const item = newData[index]
+        newData.splice(index, 1, {
+            ...item,
+            ...record
+        })
+        setData(newData)
     }
-
-
 
     const handleAdd = (values) =>{
         const newCustomer ={
             key: numberOfCustomer,
-            name: values.user.name,
-            age: values.user.age,
-            address: values.user.address,
-            dateOfBirth: values.user.birth['_d'].toLocaleDateString('en-GB'),
+            name: values.name,
+            age: values.age,
+            address: values.address,
+            dateOfBirth: values.birth['_d'].toLocaleDateString('en-GB'),
         }
         const dataSource = [...data, newCustomer];
         setData(dataSource)
-        setNumberOfCustomer(numberOfCustomer+1)
+        setNumberOfCustomer(numberOfCustomer + 1)
 
     }
 
@@ -72,7 +86,7 @@ const Customer = props =>{
           render: (_, record) => {
               return(
                   <Space>
-                    <Button type="primary" onClick={() => handleUpdate(record)}>Update</Button>
+                    <UpdateCustomer user={record} handleUpdate={handleUpdate}/>
                     <Button danger onClick={() => handleDelete(record.key)}>Delete</Button>
                   </Space>
               )
@@ -83,7 +97,10 @@ const Customer = props =>{
     return (
         <>
             <div style={{float:'right'}}>
-                <AddCustomer handleAdd={handleAdd}/>
+                <Button type="primary">
+                    <Link to="/add-customer">Add Customer</Link>
+                </Button>
+                {/* <AddCustomer handleAdd={handleAdd}/> */}
             </div>
             <Table dataSource={data} bordered columns={columns}/>
         </>

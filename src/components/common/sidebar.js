@@ -19,25 +19,20 @@ const {Sider} = Layout
 
 const AppSideBar = props =>{
     return(
-        <Router>
-            <Sider trigger={null} className="sidebar-container">
-                <div className="logo" />
-                <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
-                    <Menu.Item key="1" icon={<UserOutlined />}>
-                        {/* Customer */}
-                        <Link to="/customer">Customer</Link>
-                    </Menu.Item>
-                    <Menu.Item key="2" icon={<VideoCameraOutlined />}>
-                        Product
-                        {/* <Link to="/product">Product</Link> */}
-                    </Menu.Item>
-                    <Menu.Item key="3" icon={<UploadOutlined />}>
-                        Order
-                        {/* <Link to="/order">Order</Link> */}
-                    </Menu.Item>
-                </Menu>
-            </Sider>
-        </Router>
+        <Sider trigger={null} className="sidebar-container">
+            <div className="logo" />
+            <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
+                <Menu.Item key="1" icon={<UserOutlined />}>
+                    <Link to="/customer">Customer</Link>
+                </Menu.Item>
+                <Menu.Item key="2" icon={<VideoCameraOutlined />}>
+                    <Link to="/product">Product</Link>
+                </Menu.Item>
+                <Menu.Item key="3" icon={<UploadOutlined />}>
+                    <Link to="/order">Order</Link>
+                </Menu.Item>
+            </Menu>
+        </Sider>
     )
 }
 
