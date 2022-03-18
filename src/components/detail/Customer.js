@@ -1,17 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, createContext } from 'react';
 import {Table, Button, Space} from 'antd'
-import AddCustomer from '../common/AddCustomer';
-import UpdateCustomer from '../common/UpdateCustomer';
+import ModalCustomer from '../common/modal/ModalCustomer'
+import { useHistory } from "react-router-dom";
 
-import {
-    BrowserRouter as Router,
-    Switch,
-    Route,
-    Link,
-    Redirect
-} from "react-router-dom";
+
 
 import 'antd/dist/antd.css'
+import { ConsoleSqlOutlined } from '@ant-design/icons';
 
 const dataSource = [
     {
@@ -38,10 +33,12 @@ const dataSource = [
 ]
 
 
+
 const Customer = props =>{
 
     const[data, setData] = useState(dataSource)
     const[numberOfCustomer, setNumberOfCustomer] = useState(dataSource.length)
+    const history = useHistory()
 
     const handleUpdate = (record) =>{
         const newData = [...data]
@@ -60,7 +57,7 @@ const Customer = props =>{
             name: values.name,
             age: values.age,
             address: values.address,
-            dateOfBirth: values.birth['_d'].toLocaleDateString('en-GB'),
+            dateOfBirth: values.dateOfBirth,
         }
         const dataSource = [...data, newCustomer];
         setData(dataSource)
@@ -86,7 +83,15 @@ const Customer = props =>{
           render: (_, record) => {
               return(
                   <Space>
-                    <UpdateCustomer user={record} handleUpdate={handleUpdate}/>
+                    {/* <ModalCustomer 
+                        descBtn={"Update"} 
+                        type={"primary"} 
+                        customer={record} 
+                        handleSubmit={handleUpdate}
+                    /> */}
+                    <Button type="primary" onClick={() =>{
+                        history.push(`/customer/${record.key}`)
+                    }}>Update</Button>
                     <Button danger onClick={() => handleDelete(record.key)}>Delete</Button>
                   </Space>
               )
@@ -97,10 +102,14 @@ const Customer = props =>{
     return (
         <>
             <div style={{float:'right'}}>
-                <Button type="primary">
-                    <Link to="/add-customer">Add Customer</Link>
-                </Button>
-                {/* <AddCustomer handleAdd={handleAdd}/> */}
+                <ModalCustomer 
+                    descBtn={"Add customer"} 
+                    type={"primary"} 
+                    handleSubmit={handleAdd}
+                />
+                {/* <Button type="primary" onClick = {() =>{history.push("/add-customer")}}>
+                    Add customer
+                </Button> */}
             </div>
             <Table dataSource={data} bordered columns={columns}/>
         </>

@@ -11,9 +11,9 @@ const AddCustomer = ({handleAdd}) =>{
 
     const[isVisible, setIsVisible] = useState(true)
 
-    const showModal = () =>{
-        setIsVisible(true)
-    }
+    // const showModal = () =>{
+    //     setIsVisible(true)
+    // }
 
     const handleCancel = () =>{
         setIsVisible(false)
