@@ -1,4 +1,4 @@
-*{
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -11,9 +11,25 @@ body {
   overflow-x: hidden;
 }
 
-
-.App{
+.App {
   font-family: 'Poppins', sans-serif;
 }
 
+.ant-table-container table > thead > tr th {
+  background-color: #009879;
+  color: #ffffff;
+}
 
+.ant-layout-content {
+  position: relative;
+}
+
+.loading {
+  width: 100%;
+  height: 280px;
+  padding-left: 35%;
+  line-height: 280px;
+  position: fixed;
+  z-index: 99;
+  font-size: 30px;
+}

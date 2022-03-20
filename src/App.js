@@ -16,36 +16,17 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Redirect
 } from "react-router-dom";
-import React,{useEffect, useState, createContext} from 'react';
+import React from 'react';
 
 
 const {Header, Content} = Layout
 
 function App() {
 
-  const[dataCustomer, setDataCustomer] = useState({})
-
-  useEffect(() =>{
-    const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
-    
-    const fetchData = async () =>{
-        try{
-            const response = await fetch(url)
-            const data = await response.json()
-            setDataCustomer(data)
-        }catch(error){
-            console.log("error", error)
-        }
-    }
-    fetchData();
-  },[])
-
   return (
     <Router>
-        <div className="App">
-          <Switch>
+        <div className="App">          
             <React.Fragment>              
               <Layout>
                 <Header>
@@ -54,37 +35,36 @@ function App() {
                 <Layout>
                   <ShopSidebar/>
                   <Content>
+                    <Switch>
+                      <Route path="/" exact>
+                        <Customer/>
+                      </Route>
 
-                    <Route path="/" exact>
-                      <Customer/>
-                    </Route>
+                      <Route path="/customer" exact>
+                        <Customer/>
+                      </Route>
 
-                    <Route path="/customer" exact>
-                      <Customer/>
-                    </Route>
+                      <Route path="/product" exact>
+                        <Product/>
+                      </Route>
 
-                    <Route path="/product">
-                      <Product/>
-                    </Route>
+                      <Route path="/order" exact>
+                        <Order/>
+                      </Route>
 
-                    <Route path="/order">
-                      <Order/>
-                    </Route>
-                    
-                    <Route path="/add-customer">
-                      <AddCustomer/>
-                    </Route>
+                      <Route path="/add-customer">
+                        <AddCustomer/>
+                      </Route>
 
 
-                    <Route path="/customer/:id">
-                      <CustomerDetail customers={dataCustomer}/>
-                    </Route>
-
+                      <Route path="/customer/:id">
+                        <CustomerDetail/>
+                      </Route>
+                      </Switch>
                   </Content>
                 </Layout>
               </Layout>
-            </React.Fragment>
-          </Switch>
+            </React.Fragment>          
         </div>
     </Router>
   );

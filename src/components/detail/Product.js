@@ -1,6 +1,12 @@
-import {Table} from 'antd'
+import {Table, Button, Space} from 'antd'
+
+import { useHistory, Switch, Route,useRouteMatch, Link } from 'react-router-dom'
+
+import { DeleteOutlined, EditOutlined, PlusCircleOutlined, LoadingOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
+
+import AddProduct from '../pages/AddProduct'
 
 const dataSource = [
     {
@@ -55,11 +61,44 @@ const columns = [
         dataIndex: 'desc',
         key: 'desc'
     }
+    ,{
+        title: "Action",
+        dataIndex: '',
+        key: '',
+        render: (record) =>{
+            return(
+                <Space>
+                    <Button type="primary"><EditOutlined/></Button>
+                    <Button danger><DeleteOutlined/></Button>
+                </Space>
+            )
+        }
+    }
 ]
 
-const Product  = props =>{
+const Product  = () =>{
+
+    const history = useHistory()
+
+    let {path, url} = useRouteMatch()
+
     return (
-        <Table dataSource={dataSource} columns={columns}/>
+        <>
+            
+            <div className="add-icon">
+                <Button type="primary" onClick = {() =>{
+                    history.push(`${url}/add-product`)
+
+                }}><PlusCircleOutlined /></Button>
+            </div>
+            <Table dataSource={dataSource} columns={columns}/>
+            <Switch>
+                <Route path={`${path}/add-product`}>
+                    <AddProduct/>
+                </Route>    
+            </Switch>
+        </>
+        
     )
 }
 export default Product

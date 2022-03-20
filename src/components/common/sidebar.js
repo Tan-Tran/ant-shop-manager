@@ -4,7 +4,7 @@ import {
     BrowserRouter as Router,
     Switch,
     Route,
-    Link
+    Link,
   } from "react-router-dom";
 
 import './Sidebar.css'
@@ -21,7 +21,7 @@ const AppSideBar = props =>{
     return(
         <Sider trigger={null} className="sidebar-container">
             <div className="logo" />
-            <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
+            <Menu theme="dark" mode="inline" defaultSelectedKeys={['']}>
                 <Menu.Item key="1" icon={<UserOutlined />}>
                     <Link to="/customer">Customer</Link>
                 </Menu.Item>

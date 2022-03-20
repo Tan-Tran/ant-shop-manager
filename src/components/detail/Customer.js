@@ -1,74 +1,70 @@
-import React, { useState, createContext } from 'react';
-import {Table, Button, Space} from 'antd'
-import ModalCustomer from '../common/modal/ModalCustomer'
-import { useHistory } from "react-router-dom";
+import React, { useState, useEffect } from 'react'
+import { useHistory } from "react-router-dom"
 
-
+import {Table, Button, Space, Spin} from 'antd'
+import { DeleteOutlined, EditOutlined, UserAddOutlined, LoadingOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
-import { ConsoleSqlOutlined } from '@ant-design/icons';
+import './Customer.css'
 
-const dataSource = [
-    {
-        key: '0',
-        name: 'John 1',
-        age: 22,
-        address: 'New York',
-        dateOfBirth: '1/1/2000',
-    },
-    {
-        key: '1',
-        name: 'John 2',
-        age: 21,
-        address: 'HCM',
-        dateOfBirth: '1/1/2001',
-    },
-    {
-        key: '2',
-        name: 'John 3',
-        age: 20,
-        address: 'Ha Noi',
-        dateOfBirth: '1/1/2002',
-    },
-]
+const loadingIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />
 
+const Customer = () =>{
 
+    const[customers, setCustomers] = useState([])
 
-const Customer = props =>{
+    const[isLoading, setIsLoading] = useState(false)
 
-    const[data, setData] = useState(dataSource)
-    const[numberOfCustomer, setNumberOfCustomer] = useState(dataSource.length)
     const history = useHistory()
 
-    const handleUpdate = (record) =>{
-        const newData = [...data]
-        const index = newData.findIndex(item => record.key === item.key)
-        const item = newData[index]
-        newData.splice(index, 1, {
-            ...item,
-            ...record
-        })
-        setData(newData)
-    }
+    const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
 
-    const handleAdd = (values) =>{
-        const newCustomer ={
-            key: numberOfCustomer,
-            name: values.name,
-            age: values.age,
-            address: values.address,
-            dateOfBirth: values.dateOfBirth,
+    const fetchCustomers = async () =>{
+        setIsLoading(true)
+        try{
+            const response = await fetch(url)
+            if(!response.ok){
+                throw new Error("Some thing went wrong!")
+            }
+            const data = await response.json()
+            const loadedCustomers = [];
+            for(const key in data){
+                loadedCustomers.push({
+                    key: key,
+                    name: data[key].name,
+                    age: data[key].age,
+                    address: data[key].address,
+                    dateOfBirth: data[key].dateOfBirth,
+                })
+            }
+            setCustomers(loadedCustomers)
+        }catch(error){
+            console.log("error", error)
         }
-        const dataSource = [...data, newCustomer];
-        setData(dataSource)
-        setNumberOfCustomer(numberOfCustomer + 1)
-
+        setIsLoading(false)
     }
+
+    useEffect(() =>{
+        fetchCustomers();
+    },[])   
 
     const handleDelete = (key) =>{
-        const dataSource = [...data]
-        const dataAfterDelete = dataSource.filter((item) => item.key !== key)
-        setData(dataAfterDelete)
+
+        const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`
+
+        const removeCustomer = async() =>{
+            try{
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                });
+                const data = await response.json()
+                fetchCustomers();
+                console.log(data);
+            }catch(error){
+                console.log("delete error")
+            }
+        }
+        removeCustomer();
     }
     
     const columns = [
@@ -77,41 +73,33 @@ const Customer = props =>{
         { title: 'Address', dataIndex: 'address', key: 'address' },
         { title: 'Date of birth', dataIndex: 'dateOfBirth', key: 'dateOfBirth' },
         {
-          title: 'Action',
-          dataIndex: '',
-          key: '',
-          render: (_, record) => {
-              return(
-                  <Space>
-                    {/* <ModalCustomer 
-                        descBtn={"Update"} 
-                        type={"primary"} 
-                        customer={record} 
-                        handleSubmit={handleUpdate}
-                    /> */}
-                    <Button type="primary" onClick={() =>{
-                        history.push(`/customer/${record.key}`)
-                    }}>Update</Button>
-                    <Button danger onClick={() => handleDelete(record.key)}>Delete</Button>
-                  </Space>
-              )
-          }
-        },
-      ];
+            title: 'Action',
+            dataIndex: '',
+            key: '',
+            render: (_, record) => {
+                return(
+                    <Space>
+                        <Button type="primary" onClick={() =>{
+                            history.push(`/customer/${record.key}`)
+                        }}><EditOutlined /></Button>
+                        <Button danger onClick={() => handleDelete(record.key)}><DeleteOutlined /></Button>
+                    </Space>
+                )
+            }
+            },
+        ];
     
     return (
         <>
-            <div style={{float:'right'}}>
-                <ModalCustomer 
-                    descBtn={"Add customer"} 
-                    type={"primary"} 
-                    handleSubmit={handleAdd}
-                />
-                {/* <Button type="primary" onClick = {() =>{history.push("/add-customer")}}>
-                    Add customer
-                </Button> */}
+            {isLoading && <div className="loading">
+                <Spin indicator={loadingIcon}></Spin>
+            </div>}
+            <div className="add-icon">
+                <Button type="primary" onClick = {() =>{history.push("/add-customer")}}>
+                    <UserAddOutlined />
+                </Button>
             </div>
-            <Table dataSource={data} bordered columns={columns}/>
+            <Table dataSource={customers} bordered columns={columns}/>
         </>
     )
 }
