@@ -6,7 +6,10 @@ import Product from './components/detail/Product'
 import Order from './components/detail/Order'
 
 import AddCustomer from './components/pages/AddCustomer'
-import CustomerDetail from './components/pages/CustomerDetail'
+import EditCustomer from './components/pages/EditCustomer'
+import AddProduct from './components/pages/AddProduct'
+import EditProduct from './components/pages/EditProduct'
+import AddOrder from './components/pages/AddOrder'
 
 import 'antd/dist/antd.css'
 import {Layout} from 'antd'
@@ -58,8 +61,21 @@ function App() {
 
 
                       <Route path="/customer/:id">
-                        <CustomerDetail/>
+                        <EditCustomer/>
                       </Route>
+
+                      <Route path="/add-product">
+                        <AddProduct/>
+                      </Route>
+
+                      <Route path="/product/:id">
+                        <EditProduct/>
+                      </Route>
+
+                      <Route path="/add-order">
+                        <AddOrder/>
+                      </Route>
+
                       </Switch>
                   </Content>
                 </Layout>

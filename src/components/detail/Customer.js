@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useHistory } from "react-router-dom"
 
 import {Table, Button, Space, Spin} from 'antd'
-import { DeleteOutlined, EditOutlined, UserAddOutlined, LoadingOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, UserAddOutlined, LoadingOutlined, AppstoreAddOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
 import './Customer.css'
@@ -35,6 +35,7 @@ const Customer = () =>{
                     age: data[key].age,
                     address: data[key].address,
                     dateOfBirth: data[key].dateOfBirth,
+                    phone: data[key].phone
                 })
             }
             setCustomers(loadedCustomers)
@@ -72,6 +73,7 @@ const Customer = () =>{
         { title: 'Age', dataIndex: 'age', key: 'age' },
         { title: 'Address', dataIndex: 'address', key: 'address' },
         { title: 'Date of birth', dataIndex: 'dateOfBirth', key: 'dateOfBirth' },
+        { title: 'Phone', dataIndex: 'phone', key: 'phone' },
         {
             title: 'Action',
             dataIndex: '',
@@ -82,7 +84,7 @@ const Customer = () =>{
                         <Button type="primary" onClick={() =>{
                             history.push(`/customer/${record.key}`)
                         }}><EditOutlined /></Button>
-                        <Button danger onClick={() => handleDelete(record.key)}><DeleteOutlined /></Button>
+                        <Button danger onClick={() => handleDelete(record.key)}><DeleteOutlined/></Button>
                     </Space>
                 )
             }

@@ -37,7 +37,8 @@ const AddCustomer = () =>{
             name: values.name,
             age: values.age,
             address: values.address,
-            dateOfBirth: moment(values.birth).format(formatDate)
+            dateOfBirth: moment(values.birth).format(formatDate),
+            phone: values.phone
         }
 
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
@@ -89,6 +90,10 @@ const AddCustomer = () =>{
 
                 <Form.Item name="birth" label="Date of birth" rules={[{ required: true }]}>
                     <DatePicker format={formatDate} disabledDate={d => !d || d.isAfter(new Date().toLocaleDateString())}/>
+                </Form.Item>
+
+                <Form.Item name="phone" label="Phone" rules={[{ required: true }]}>
+                    <Input />
                 </Form.Item>
 
                 <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 8 }}>

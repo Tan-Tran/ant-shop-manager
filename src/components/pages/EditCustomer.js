@@ -26,7 +26,7 @@ const validateMessages = {
 
 const formatDate = 'DD/MM/YYYY'
 
-const CustomerDetail = () =>{
+const EditCustomer = () =>{
 
     const [form] = Form.useForm();
 
@@ -41,7 +41,6 @@ const CustomerDetail = () =>{
     const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${id}.json`
 
     useEffect(() =>{
-
         const fetchCustomer = async () =>{
             try{
                 const response = await fetch(url);
@@ -61,7 +60,8 @@ const CustomerDetail = () =>{
             name: customer?.name || '',
             age: customer?.age || 1,
             address: customer?.address || '',
-            birth: customer.dateOfBirth? moment(customer.dateOfBirth, formatDate) : moment(new Date().toLocaleDateString('en-GB'), formatDate)
+            birth: customer.dateOfBirth? moment(customer.dateOfBirth, formatDate) : moment(new Date().toLocaleDateString('en-GB'), formatDate),
+            phone: customer?.phone || ''
         })
     },[customer])
 
@@ -71,7 +71,8 @@ const CustomerDetail = () =>{
             name: values.name,
             age: values.age,
             address: values.address,
-            dateOfBirth: moment(values.birth).format(formatDate)
+            dateOfBirth: moment(values.birth).format(formatDate),
+            phone: values.phone
         }
         
         const updateCustomer = async () =>{
@@ -90,7 +91,7 @@ const CustomerDetail = () =>{
     }
     
     return(
-        <React.Fragment>
+        <>
             {isLoading && <div className="loading">
                 <Spin tip="Loading..."></Spin>
             </div>}
@@ -115,6 +116,10 @@ const CustomerDetail = () =>{
                     <DatePicker format={formatDate} disabledDate={d => !d || d.isAfter(new Date().toLocaleDateString())}/>
                 </Form.Item>
 
+                <Form.Item name="phone" label="Phone" rules={[{ required: true }]}>
+                    <Input />
+                </Form.Item>
+
                 <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 8 }}>
                     <Button type="primary" htmlType="submit">
                         Submit
@@ -122,7 +127,7 @@ const CustomerDetail = () =>{
                 </Form.Item>
 
             </Form>
-        </React.Fragment>
+        </>
     )
 }
-export default CustomerDetail
+export default EditCustomer

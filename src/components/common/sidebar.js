@@ -21,7 +21,7 @@ const AppSideBar = props =>{
     return(
         <Sider trigger={null} className="sidebar-container">
             <div className="logo" />
-            <Menu theme="dark" mode="inline" defaultSelectedKeys={['']}>
+            <Menu theme="dark" mode="inline">
                 <Menu.Item key="1" icon={<UserOutlined />}>
                     <Link to="/customer">Customer</Link>
                 </Menu.Item>

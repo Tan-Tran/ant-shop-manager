@@ -1,16 +1,13 @@
-import React,{useState} from 'react';
-import {Form, Input, Button, InputNumber, Select, Spin} from 'antd'
-import { useHistory } from 'react-router-dom';
+import React,{useEffect, useState} from 'react';
 
-import {
-    useParams
-} from "react-router-dom";
+import {Form, Input, Button, InputNumber, Select, Spin} from 'antd'
+
+import {useHistory, useParams} from 'react-router-dom'
 
 const layout = {
     labelCol: { span: 8 },
     wrapperCol: { span: 8 },
 };
-
 
 const validateMessages = {
     required: '${label} is required!',
@@ -25,58 +22,77 @@ const validateMessages = {
 
 const { Option } = Select;
 
-const AddProduct = () =>{
+const EditProduct = () =>{
+
+    const [form] = Form.useForm();
 
     const {id} = useParams();
 
-    const [form] = Form.useForm()
+    const[isLoading, setIsLoading] = useState(false)
 
-    const[isSending, setIsSending] = useState(false)
-
+    const[product, setProduct] = useState({})
+    
     const history = useHistory()
 
-    console.log(id);
+    const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${id}.json`
 
-    const addProductHandler = (values) =>{
-
-        const newProduct = {
-            name: values.name,
-            age: values.age,
-            desc: values.desc,
-            price: values.price,
-            quantity: values.quantity,
-            origin: values.origin,
-
-        }
-
-        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
-
-        const addProduct = async () =>{
-            setIsSending(true)
+    useEffect(() =>{
+        const fetchProduct = async () =>{
+            setIsLoading(true)
             try{
-                const response = await fetch(url,{
-                    method: 'POST',
-                    body: JSON.stringify(newProduct),
-                    headers:{
-                        'Content-Type': 'application/json'
-                    }
-                })
-                setIsSending(false)
-                history.push("/product")
+                const response = await fetch(url)
+                const data = await response.json();
+                setProduct(data)
+                setIsLoading(false)
             }catch(error){
-                console.log("add product error")
-            }
+                console.log("get product error")
+            }         
         }
-        addProduct();
+        fetchProduct();
+    },[])
+
+    useEffect(() =>{
+        form.setFieldsValue({
+            name: product?.name || '',
+            quantity: product?.quantity || 0,
+            price: product?.price || 0,
+            origin: product?.origin || '',
+            desc: product?.desc || '',
+        })
+    },[product])
+
+    const updateProductHandler = (values) =>{
+
+        const newData = {
+            name: values.name,
+            price: values.price,
+            origin: values.origin,
+            address: values.address,
+            quantity: values.quantity,
+            desc: values.desc,
+        }
+
+        const updateProduct = async () =>{
+            const response = await fetch(url,{
+                method: 'PUT',
+                headers: { 'Content-Type': 'application'},
+                body: JSON.stringify(newData)
+            })
+            history.push("/product")
+        }
+
+        updateProduct()
+
     }
 
     return(
         <>
-            {isSending && <div className="loading">
-                <Spin tip="Sending..."></Spin></div>}
+            {isLoading && <div className="loading">
+                <Spin tip="Loading..."></Spin>
+            </div>}
             <Form 
                 form={form} 
-                onFinish={addProductHandler} 
+                onFinish={updateProductHandler} 
                 {...layout}
                 validateMessages={validateMessages}>
                 
@@ -118,4 +134,4 @@ const AddProduct = () =>{
     )
 }
 
-export default AddProduct
+export default EditProduct

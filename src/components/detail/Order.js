@@ -1,4 +1,8 @@
-import {Table} from 'antd'
+import {Table, Button, Space} from 'antd'
+
+import { DeleteOutlined, EditOutlined, UserAddOutlined, LoadingOutlined, PlusCircleOutlined } from '@ant-design/icons'
+
+import {useHistory} from 'react-router-dom'
 
 import 'antd/dist/antd.css'
 
@@ -34,8 +38,10 @@ const dataSource= [
         quantity: 3,
         price: 10,
         total: 30,
-    },
+    },   
 ]
+
+
 
 const columns = [
     {
@@ -62,12 +68,34 @@ const columns = [
         title: 'Total',
         dataIndex: 'total',
         key: 'total'
+    },
+    {
+        title: 'Action',
+        dataIndex: '',
+        key: '',
+        render: (record) =>{
+            return (
+                <Space>
+                    <Button type="primary"><EditOutlined/></Button>
+                    <Button danger><DeleteOutlined/></Button>
+                </Space>
+            )
+        }
     }
 ]
 
 const Order = props =>{
+
+    const history = useHistory()
     return(
-        <Table dataSource={dataSource} columns={columns}/>
+        <>
+            <div className="add-icon">
+                <Button type="primary" onClick = {() =>{
+                    history.push("/add-order")
+                }}><PlusCircleOutlined/></Button>
+            </div>
+            <Table dataSource={dataSource} columns={columns}/>
+        </>
     )
 }
 
