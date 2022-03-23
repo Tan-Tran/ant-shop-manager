@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useHistory } from "react-router-dom"
 
-import {Table, Button, Space, Spin} from 'antd'
+import {Table, Button, Space, Spin, DatePicker} from 'antd'
 import { DeleteOutlined, EditOutlined, UserAddOutlined, LoadingOutlined, AppstoreAddOutlined } from '@ant-design/icons'
+
+import moment from 'moment'
+
+import formatDate from '../format/formatDate'
 
 import 'antd/dist/antd.css'
 import './Customer.css'
@@ -67,18 +71,46 @@ const Customer = () =>{
         }
         removeCustomer();
     }
+
+    // edit table cell
+
+    const onChange = (event, index) =>{
+        const name = event.target.name;
+        const newCustomers = [...customers]
+        const newRecord = {...newCustomers[index]}
+        const newName = event.target.value
+        newRecord[name] = newName
+        newCustomers[index] = newRecord
+        setCustomers(newCustomers)
+    }
     
     const columns = [
-        { title: 'Name', dataIndex: 'name', key: 'name' },
+        { 
+            title: 'Name', 
+            dataIndex: 'name', 
+            key: 'name',
+            render: (text, record, index) => <input value={text} name="name" onChange={(event) => onChange(event, index)}/>
+        },
         { title: 'Age', dataIndex: 'age', key: 'age' },
         { title: 'Address', dataIndex: 'address', key: 'address' },
-        { title: 'Date of birth', dataIndex: 'dateOfBirth', key: 'dateOfBirth' },
+        { 
+            title: 'Date of birth', 
+            dataIndex: 'dateOfBirth', 
+            key: 'dateOfBirth',
+            render: (text, record, index) => 
+                <DatePicker 
+                    value={moment(record.dateOfBirth, formatDate)} 
+                    name="dateOfBirth" format={formatDate} 
+                    disabledDate={d => !d || d.isAfter(new Date().toLocaleDateString())}
+                    onChange = {(event) => onChange(event, index)}
+                />
+        },
         { title: 'Phone', dataIndex: 'phone', key: 'phone' },
         {
             title: 'Action',
             dataIndex: '',
             key: '',
-            render: (_, record) => {
+            render: (text, record, index) => {
                 return(
                     <Space>
                         <Button type="primary" onClick={() =>{

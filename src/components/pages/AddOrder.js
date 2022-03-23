@@ -1,6 +1,10 @@
 import React,{useEffect, useState} from 'react';
-import {Form, Select, InputNumber, Button, Row, Col, Table, Card, Space} from 'antd'
+import {Form, Select, InputNumber, Input, DatePicker, Button, Row, Col, Table, Card, Space} from 'antd'
 import {PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
+
+import {useParams} from 'react-router-dom'
+
+import formatDate from '../format/formatDate'
 
 const layout = {
     labelCol: { span: 6 },
@@ -21,6 +25,7 @@ const validateMessages = {
 const {Option} = Select
 
 const AddOrder = () =>{
+
     const [form] = Form.useForm()
 
     const[products, setProducts] = useState([])
@@ -29,9 +34,13 @@ const AddOrder = () =>{
 
     const[customer, setCustomer] = useState({})
 
+    const[order, setOrder] = useState(null)
+
     const[total, setTotal] = useState(0)
 
     const[items, setItems] = useState([])
+
+    const {id} = useParams();
 
     useEffect(() =>{
         form.setFieldsValue({
@@ -39,29 +48,102 @@ const AddOrder = () =>{
         })
     },[])
 
+    useEffect(() =>{
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+        const fetchProduct = async () =>{
+            const response = await fetch(url)
+            const data = await response.json()
+            const loadedProducts = []
+            for(const key in data){
+                loadedProducts.push({
+                    key: key,
+                    name: data[key].name,
+                    price: data[key].price,
+                    quantity: data[key].quantity,
+                    desc: data[key].desc,
+                    origin: data[key].origin,
+                })
+            }
+            setProducts(loadedProducts)
+        }
+        fetchProduct()
+    },[])
+
+    useEffect(() =>{
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
+        const fetchCustomers = async () =>{
+            const response = await fetch(url)
+            const data = await response.json()
+            const loadedCustomers = [];
+            for(const key in data){
+                loadedCustomers.push({
+                    key: key,
+                    name: data[key].name,
+                    address: data[key].address,
+                    dateOfBirth: data[key].dateOfBirth,
+                    phone: data[key].phone
+                })
+            }
+            setCustomers(loadedCustomers)
+        }
+        fetchCustomers()
+    },[])
+
+
+
+    const fetchOrder = async () =>{
+        const response = await fetch (`https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${id}.json`)
+        const data = await response.json()
+        setOrder(data)
+    }
+
+    useEffect(() =>{
+        fetchOrder()
+    },[])
+
+
+    useEffect(() =>{
+        if(id && customers.length !== 0 && products.length !== 0 && order){
+            const customerOrder = customers.find((item) => item.key === order.customerId)
+            setCustomer(customerOrder)
+            setItems(order.products)
+            setTotal(total)
+            form.setFieldsValue({
+                customerId: order.customerId
+            })
+        }
+    },[customers, products, order])
+
     const submitHandler = (values) =>{
-
-        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json"
-
         const newOrder = {
             customerId: values.customerId,
             products: items
         }
-
-
-        const addOrder = async() =>{
-            const response =  fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newOrder)
-            })
-            const data = response.json()
-            console.log(data)
+        if(id){
+            const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${id}.json`
+            const updateOrder = async () =>{
+                const response =  fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newOrder)
+                })
+            }
+            updateOrder()
+        }else{
+            const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json"
+            const addOrder = async() =>{
+                const response =  fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newOrder)
+                })
+            }
+            addOrder()
         }
-        addOrder()
-
     }
 
     const handleAddProduct = () =>{
@@ -86,9 +168,11 @@ const AddOrder = () =>{
                     total: (quantity)* (+product.price)
                 })
             }
+        }        
+        let total = 0
+        for(const item of newItems){
+            total = total + item.total
         }
-
-        const total = newItems.reduce((previous, current) => (previous? previous.total: 0) + (+current.total), 0)
         setItems(newItems);
         setTotal(total)
     }
@@ -101,7 +185,10 @@ const AddOrder = () =>{
             total: item.total + item.price,
         }: item)
         setItems(newItems);
-        const total = newItems.reduce((previous, current) => (previous? previous.total: 0) + (+current.total), 0)
+        let total = 0
+        for(const item of newItems){
+            total = total + item.total
+        }
         setTotal(total)
     }
 
@@ -117,7 +204,10 @@ const AddOrder = () =>{
                 total: item.total - item.price,
             }: item)
         }
-        const total = newItems.reduce((previous, current) => (previous? previous.total: 0) + (+current.total), 0)
+        let total = 0
+        for(const item of newItems){
+            total = total + item.total
+        }
         setTotal(total)
         setItems(newItems);
     }
@@ -162,61 +252,18 @@ const AddOrder = () =>{
         }
     ]
 
-    useEffect(() =>{
-        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
-        const fetchProduct = async () =>{
-            const response = await fetch(url)
-            const data = await response.json()
-            const loadedProducts = []
-            for(const key in data){
-                loadedProducts.push({
-                    key: key,
-                    name: data[key].name,
-                    price: data[key].price,
-                    quantity: data[key].quantity,
-                    desc: data[key].desc,
-                    origin: data[key].origin,
-                })
-            }
-            setProducts(loadedProducts)
-        }
-        fetchProduct()
-    },[])
-
-    useEffect(() =>{
-        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
-
-        const fetchCustomers = async () =>{
-            const response = await fetch(url)
-            const data = await response.json()
-            const loadedCustomers = [];
-            for(const key in data){
-                loadedCustomers.push({
-                    key: key,
-                    name: data[key].name,
-                    address: data[key].address,
-                    dateOfBirth: data[key].dateOfBirth,
-                    phone: data[key].phone
-                })
-            }
-            setCustomers(loadedCustomers)
-        }
-        fetchCustomers()
-    },[])
-
-
-
     return(
         <>
             <Form form={form} onFinish={submitHandler}validateMessages={validateMessages} {...layout}> 
                 <Row>
-                    <Col span={12}>
+                    <Col span={18}>
                         <Row>
                             <Form.Item name="customerId" label="Search" rules={[{ required: true }]}>
                                 <Select
                                     showSearch
                                     style={{ width: 225}}
                                     placeholder="Search customer"
+                                    optionLabelProp="label"
                                     optionFilterProp="children"
                                     onChange={selectCustomerHandler}
                                     filterOption={(input, option) => 
@@ -228,7 +275,7 @@ const AddOrder = () =>{
                                 >
                                     {customers.map((customer) =>{
                                         return(
-                                            <Option value={customer.key} key={customer.key}>
+                                            <Option value={customer.key} key={customer.key} label={customer.name}>
                                                 <div>
                                                     <span style={{display: 'inline-block', marginLeft: 10, width: 100}}>
                                                         Name: {customer.name}
@@ -250,16 +297,34 @@ const AddOrder = () =>{
                                 </Select>
                             </Form.Item>
                         </Row>
-                        <Row>
-                        <Card title="Customer" bordered={false} style={{ width: 300 }}>
-                            <p>Name: {customer.name}</p>
-                            <p>ID: {customer.key}</p>
-                            <p>Phone: {customer.phone}</p>
-                            <p>Birth: {customer.dateOfBirth}</p>
-                        </Card>
+                        <Row gutter={16}>
+                            <Col>
+                                <Card title="Customer" bordered={false} style={{ width: 300 }}>
+                                    <p>Name: {customer.name}</p>
+                                    <p>ID: {customer.key}</p>
+                                    <p>Phone: {customer.phone}</p>
+                                    <p>Birth: {customer.dateOfBirth}</p>
+                                </Card>
+                            </Col>
+                            {/* <Col span={10}>
+                                <Card title="Add customer">
+                                    <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+                                        <Input/>
+                                    </Form.Item>
+                                    <Form.Item name="address" label="Address" rules={[{ required: true }]}>
+                                        <Input />
+                                    </Form.Item>
+                                    <Form.Item name="birth" label="Date of birth" rules={[{ required: true }]}>
+                                        <DatePicker format={formatDate} disabledDate={d => !d || d.isAfter(new Date().toLocaleDateString())}/>
+                                    </Form.Item>
+                                    <Form.Item name="phone" label="Phone" rules={[{ required: true }]}>
+                                        <Input />
+                                    </Form.Item>
+                                </Card>
+                            </Col> */}
                         </Row>
                     </Col>
-                    <Col span={12}>
+                    <Col span={6}>
                         <Form.Item name="product" label="Product" rules={[{ required: true }]}>
                             <Select style={{ width: 200 }} placeholder="select product">
                                 {products.map((product) =>{
@@ -280,7 +345,6 @@ const AddOrder = () =>{
                                 span: 18,
                             }}
                         >
-
                             <Button type="primary"
                                 onClick = {() =>{
                                     handleAddProduct()

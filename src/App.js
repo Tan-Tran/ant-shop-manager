@@ -10,10 +10,10 @@ import EditCustomer from './components/pages/EditCustomer'
 import AddProduct from './components/pages/AddProduct'
 import EditProduct from './components/pages/EditProduct'
 import AddOrder from './components/pages/AddOrder'
+import Example from './components/edittable/Example'
 
 import 'antd/dist/antd.css'
 import {Layout} from 'antd'
-
 
 import {
   BrowserRouter as Router,
@@ -28,6 +28,7 @@ const {Header, Content} = Layout
 function App() {
 
   return (
+      // <Example/>
     <Router>
         <div className="App">          
             <React.Fragment>              
@@ -73,6 +74,10 @@ function App() {
                       </Route>
 
                       <Route path="/add-order">
+                        <AddOrder/>
+                      </Route>
+
+                      <Route path="/order/:id">
                         <AddOrder/>
                       </Route>
 

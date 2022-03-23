@@ -1,92 +1,127 @@
+import React, {useEffect, useState} from 'react';
+
 import {Table, Button, Space} from 'antd'
 
-import { DeleteOutlined, EditOutlined, UserAddOutlined, LoadingOutlined, PlusCircleOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/icons'
 
 import {useHistory} from 'react-router-dom'
 
 import 'antd/dist/antd.css'
 
-const dataSource= [
-    {
-        key: 1,
-        customerName: 'John 1',
-        productName: 'Mouse',
-        quantity: 1,
-        price: 15,
-        total: 15,
-    },
-    {
-        key: 2,
-        customerName: 'John 1',
-        productName: 'Keyboard',
-        quantity: 2,
-        price: 10,
-        total: 20,
-    },
-    {
-        key: 3,
-        customerName: 'John 2',
-        productName: 'Screen',
-        quantity: 2,
-        price: 10,
-        total: 20,
-    },
-    {
-        key: 4,
-        customerName: 'John 1',
-        productName: 'Screen',
-        quantity: 3,
-        price: 10,
-        total: 30,
-    },   
-]
+const Order = () =>{
 
+    const[customers, setCustomers] = useState([])
 
+    const[orders, setOrders] = useState([])
 
-const columns = [
-    {
-        title: 'Customer',
-        dataIndex: 'customerName',
-        key: 'customerName',
-    },
-    {
-        title: 'Product',
-        dataIndex: 'productName',
-        key: 'productName'
-    },
-    {
-        title: 'Quantity',
-        dataIndex: 'quantity',
-        key: 'quantity'
-    },
-    {
-        title: 'Price',
-        dataIndex: 'price',
-        key: 'price',
-    },
-    {
-        title: 'Total',
-        dataIndex: 'total',
-        key: 'total'
-    },
-    {
-        title: 'Action',
-        dataIndex: '',
-        key: '',
-        render: (record) =>{
-            return (
-                <Space>
-                    <Button type="primary"><EditOutlined/></Button>
-                    <Button danger><DeleteOutlined/></Button>
-                </Space>
-            )
-        }
-    }
-]
-
-const Order = props =>{
+    const[dataOrders, setDataOrders] = useState([])
 
     const history = useHistory()
+
+    const fetchCustomers = async () =>{
+        const response = await fetch("https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json")
+        const data = await response.json()
+        const loadedCustomers = [];
+        for(const key in data){
+            loadedCustomers.push({
+                key: key,
+                name: data[key].name,
+                age: data[key].age,
+                address: data[key].address,
+                dateOfBirth: data[key].dateOfBirth,
+                phone: data[key].phone
+            })
+        }
+        setCustomers(loadedCustomers)
+    }
+
+    useEffect(() =>{
+        fetchCustomers()
+    },[])
+
+    const fetchOrders = async () =>{
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json"
+        const response =  await fetch(url)
+        const data = await response.json()
+        const loadedOrders = []
+        for(const key in data){
+            loadedOrders.push({
+                key: key,
+                customerId: data[key].customerId,
+                products: data[key].products
+            })
+        }
+        setOrders(loadedOrders)       
+    }
+
+    useEffect(()=>{
+        fetchOrders()
+    },[])
+
+    useEffect(()=>{
+        if(customers.length !== 0 && orders.length !== 0){
+            const data = []
+            for(const order of orders){
+                const orderId = order.key
+                const customer = customers.find((item) => item.key === order.customerId)
+                const orderData = {
+                    key: orderId,
+                    customerName: customer?.name,
+                    productName: '',
+                    quantity: 0,
+                    total: 0,
+                }
+                for(const product of order.products){
+                    orderData.productName = orderData.productName + ' ' + product.product
+                    orderData.quantity = orderData.quantity + product.quantity
+                    orderData.total = orderData.total + product.total
+                }
+                data.push(orderData)
+            }
+            setDataOrders(data)
+        }
+    },[customers, orders])
+    
+   
+
+    const columns = [
+        {
+            title: 'Customer',
+            dataIndex: 'customerName',
+            key: 'customerName',
+        },
+        {
+            title: 'Product',
+            dataIndex: 'productName',
+            key: 'productName'
+        },
+        {
+            title: 'Quantity',
+            dataIndex: 'quantity',
+            key: 'quantity'
+        },
+        {
+            title: 'Total',
+            dataIndex: 'total',
+            key: 'total'
+        },
+        {
+            title: 'Action',
+            dataIndex: '',
+            key: '',
+            render: (record) =>{
+                return (
+                    <Space>
+                        <Button type="primary"
+                            onClick={() => history.push(`/order/${record.key}`)}
+                        key={record.key}><EditOutlined/></Button>
+                        <Button danger><DeleteOutlined/></Button>
+                    </Space>
+                )
+            }
+        }
+    ]
+
     return(
         <>
             <div className="add-icon">
@@ -94,7 +129,7 @@ const Order = props =>{
                     history.push("/add-order")
                 }}><PlusCircleOutlined/></Button>
             </div>
-            <Table dataSource={dataSource} columns={columns}/>
+            <Table dataSource={dataOrders} columns={columns}/>
         </>
     )
 }
