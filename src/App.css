@@ -33,3 +33,7 @@ body {
   z-index: 99;
   font-size: 30px;
 }
+
+.ant-select-dropdown {
+  width: 600px !important;
+}
