@@ -1,56 +1,142 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 
-import {Table, Button, Space, Spin} from 'antd'
+import {Table, Button, Space, Spin, Form, Input, InputNumber} from 'antd'
 
-import { useHistory, Switch, Route,useRouteMatch, Link } from 'react-router-dom'
-
-import { DeleteOutlined, EditOutlined, PlusCircleOutlined, LoadingOutlined } from '@ant-design/icons'
-
-import {
-    useParams
-} from "react-router-dom";
+import { DeleteOutlined, EditOutlined, PlusCircleOutlined, LoadingOutlined, CheckOutlined, CloseOutlined, ColumnHeightOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
 
-import AddProduct from '../pages/AddProduct'
-
 const loadingIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />
 
-const Product  = () =>{
+const EditRowTable = ({index, ...props}) =>{
+    return(
+        <>
+        </>
+    )
+}
 
-    const history = useHistory()
+const EditableCell = ({editing, editable, dataIndex, title, inputType, record, children,...restProps}) =>{
+    const inputNode = inputType === 'number'? <InputNumber/>:<Input/>
+    const content = editable && editing?
+        <Form.Item
+            name = {dataIndex}
+            style={{width:200}}
+            rules={[
+                {
+                  required: true,
+                  message: `Please Input ${title}!`,
+                },
+            ]}
+        >
+            {inputNode}
+        </Form.Item>
+        : children
+    return(
+        <td {...restProps}>
+            {content}
+        </td>
+    )
+}
+
+
+const Product  = () =>{
 
     const[products, setProducts] = useState([])
 
     const[isLoading, setIsLoading] = useState(false)
 
+    const [form] = Form.useForm()
+
+    // edit
+    const [editingKey, setEditingKey] = useState('');
+    
+
+    const isEditing = (record) =>{
+        return record.key === editingKey
+    }
+
     const columns = [
-        {title: 'Name', dataIndex: 'name', key: 'name'},
-        {title: 'Quantity', dataIndex: 'quantity', key: 'quantity'},
-        {title: "Price", dataIndex: 'price',key: 'price'},
-        {title: 'Origin', dataIndex: 'origin',key: 'origin'},
-        {title: 'Description',dataIndex: 'desc',key: 'desc'},
+        {
+            title: 'Name', 
+            dataIndex: 'name', 
+            key: 'name',
+            editable: true,
+        },
+        {
+            title: 'Quantity', 
+            dataIndex: 'quantity', 
+            key: 'quantity',
+            editable: true,
+        },
+        {
+            title: "Price", 
+            dataIndex: 'price',
+            key: 'price',
+            editable: true,
+        },
+        {
+            title: 'Origin', 
+            dataIndex: 'origin',
+            key: 'origin',
+            editable: true,
+        },
+        {
+            title: 'Description',
+            dataIndex: 'desc',
+            key: 'desc',
+            editable: true,
+        },
         {
             title: "Action",
             dataIndex: '',
             key: '',
             render: (record) =>{
+                const editable = isEditing(record)
                 return(
-                    <Space>
-                        <Button type="primary" onClick={() =>{
-                            history.push(`product/${record.key}`)
-                        }}><EditOutlined/></Button>
+                    editable?
+                    (<Space>
+                        <Button type="primary" ><CheckOutlined/></Button>
+                        <Button danger><CloseOutlined/></Button>
+                    </Space>):
+                    (<Space>
+                        <Button type="primary" onClick={() =>{edit(record)}}><EditOutlined/></Button>
                         <Button danger onClick={() => handleDelete(record.key)}><DeleteOutlined/></Button>
-                    </Space>
+                    </Space>)
                 )
             }
         }
     ]
 
-    
-    const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+    const edit = (record) =>{
+        form.setFieldsValue({
+            desc: record?.desc,
+            name: record?.name,
+            origin: record?.origin,
+            price: record?.price,
+            quantity: record?.quantity
+        })
+        setEditingKey(record.key)
+    }
+
+    const newColumns = columns.map((column) =>{
+        if(!editingKey){
+            return column
+        }
+        return{
+            ...column,
+            onCell: (record) =>({
+                record,
+                inputType: column.dataIndex === 'age'? 'number':'text',
+                title: column.title,
+                dataIndex: column.dataIndex,
+                editable: column.editable,
+                editing: isEditing(record)
+            })
+        }
+    })
 
     const fetchProducts = async() =>{
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
         setIsLoading(true)
         try{
             const response = await fetch(url)
@@ -99,19 +185,25 @@ const Product  = () =>{
         removeProduct();
     }
 
-
     return (
         <>
             {isLoading && <div className="loading">
                     <Spin indicator={loadingIcon}></Spin>
              </div>}           
             <div className="add-icon">
-                <Button type="primary" onClick = {() =>{
-                    history.push("/add-product")
-
-                }}><PlusCircleOutlined /></Button>
+                <Button type="primary"><PlusCircleOutlined /></Button>
             </div>
-            <Table dataSource={products} columns={columns}/>
+            <Form form={form}>                
+                <Table
+                    dataSource={products} 
+                    columns={newColumns}
+                    components={{
+                        body: {
+                            cell: EditableCell,
+                        },
+                    }}
+                />
+            </Form>
         </>
         
     )
