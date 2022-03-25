@@ -10,7 +10,6 @@ import formatDate from '../format/formatDate'
 import 'antd/dist/antd.css'
 
 import './Customer.css'
-import { render } from 'react-dom'
 
 const loadingIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />
 
@@ -22,11 +21,15 @@ const Customer = () =>{
 
     const [editRowId, setEditRowId] = useState(null)
 
+    const [rowEdits, setRowEdits] = useState([])
+
     const [hasNewCustomerBefore, setHasNewCustomerBefore] = useState(false)
 
     const [rowData, setRowData] = useState(null)
 
     const [isLoading, setIsLoading] = useState(false)
+
+    console.log(rowEdits)
 
     const fetchCustomers = async () =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
@@ -84,7 +87,8 @@ const Customer = () =>{
             dataIndex: 'name', 
             key: 'name',
             render: (text, record) => {
-                if(record.key === editRowId){
+                const isEditRow = rowEdits.find((item) => item === record.key)
+                if(record.key === editRowId && isEditRow){
                     return (
                         <Form.Item name="name" rules={[{ required: true }]}>
                             <Input style={{width: 100}}/>
@@ -94,13 +98,6 @@ const Customer = () =>{
                     return<p>{text}</p>
                 }
             },
-            onCell: (text, record) => {
-                return{
-                    onClick: event =>{
-                        
-                    }
-                }
-            }
         },
         { 
             title: 'Age', 
@@ -188,7 +185,14 @@ const Customer = () =>{
                 if(hasNewCustomerBefore){
                     editButton = <Button type="primary" disabled><EditOutlined/></Button>
                 }else{
-                    editButton = <Button type="primary"  onClick={() =>{ setEditRowId(record.key); setRowData(record)}}><EditOutlined/></Button>
+                    editButton = <Button 
+                                    type="primary"  
+                                    onClick={() =>{ setRowEdits((previous) =>{
+                                        return [...previous, record.key]
+                                    }); setRowData(record)}}>
+                                    <EditOutlined/>
+                                </Button>
+                    // editButton = <Button type="primary"  onClick={() =>{ setEditRowId(record.key); setRowData(record)}}><EditOutlined/></Button>
                 }
                 if(record.key === editRowId){
                     editButton = ''
