@@ -87,8 +87,7 @@ const Customer = () =>{
             dataIndex: 'name', 
             key: 'name',
             render: (text, record) => {
-                const isEditRow = rowEdits.find((item) => item === record.key)
-                if(record.key === editRowId && isEditRow){
+                if(record.key === editRowId){
                     return (
                         <Form.Item name="name" rules={[{ required: true }]}>
                             <Input style={{width: 100}}/>
@@ -187,9 +186,7 @@ const Customer = () =>{
                 }else{
                     editButton = <Button 
                                     type="primary"  
-                                    onClick={() =>{ setRowEdits((previous) =>{
-                                        return [...previous, record.key]
-                                    }); setRowData(record)}}>
+                                    onClick={() =>{ setEditRowId(record.key); setRowData(record)}}>
                                     <EditOutlined/>
                                 </Button>
                     // editButton = <Button type="primary"  onClick={() =>{ setEditRowId(record.key); setRowData(record)}}><EditOutlined/></Button>
