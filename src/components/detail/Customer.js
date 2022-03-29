@@ -172,7 +172,7 @@ const Customer = () =>{
                 if(record.new){
                     return(
                         <Space>
-                            <Button type="primary" type="primary" htmlType="submit"><UserAddOutlined /></Button>
+                            <Button type="primary" htmlType="submit"><UserAddOutlined /></Button>
                             <Button danger onClick ={() => cancelAddNewRow(record.key)}><CloseOutlined/></Button>
                         </Space>
                     )

@@ -1,12 +1,16 @@
 import React, {useEffect, useState} from 'react';
 
-import {Table, Button, Space} from 'antd'
+import {Table, Button, Space, Tag} from 'antd'
 
 import { DeleteOutlined, EditOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
 
+import {useHistory} from 'react-router-dom'
+
 const Order = () =>{
+
+    const history = useHistory()
 
     const[products, setProducts] = useState([])
 
@@ -88,12 +92,12 @@ const Order = () =>{
                 const orderData = {
                     key: orderId,
                     customerName: customer?.name,
-                    productName: '',
+                    productName: [],
                     quantity: 0,
                     total: 0,
                 }
-                for(const product of order.products){
-                    orderData.productName = orderData.productName + ' ' + product.product
+                for(const product of order.products){                    
+                    orderData.productName.push(product.product)
                     orderData.quantity = orderData.quantity + product.quantity
                     orderData.total = orderData.total + product.total
                 }
@@ -132,19 +136,34 @@ const Order = () =>{
                 render: (record) =>{
                     return (
                         <Space>
-                            <Button type="primary"><PlusCircleOutlined/></Button>
-                            <Button danger><MinusCircleOutlined/></Button>
+                            <Button type="primary" shape="circle" ghost><PlusCircleOutlined/></Button>
+                            <Button danger shape="circle"><MinusCircleOutlined/></Button>
                         </Space>
                     )
                 }
             }
         ]
-        return <Table columns={columns} dataSource={loadedProducts} pagination={false} />;
+        return <Table className="sub-table" columns={columns} dataSource={loadedProducts} pagination={false} />;
     }
     
     const columns = [
         { title: 'Customer', dataIndex: 'customerName', key: 'customerName', editable: true,},
-        { title: 'Product', dataIndex: 'productName', key: 'productName', editable: true,},
+        { 
+            title: 'Product', 
+            dataIndex: 'productName', 
+            key: 'productName',
+            render: (productNames) =>(
+                <>
+                    {productNames.map((productName) =>{
+                        return(
+                            <Tag name="productName"color="geekblue" key={productName}>
+                                {productName.toUpperCase()}
+                            </Tag>
+                        )
+                    })}
+                </>
+            )
+        },
         { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true,},
         { title: 'Total', dataIndex: 'total', key: 'total', editable: false,},
         {
@@ -169,7 +188,7 @@ const Order = () =>{
     return(
         <>
             <div className="add-icon">
-                <Button type="primary" onClick = {addNewOrder}><PlusCircleOutlined/></Button>
+                <Button type="primary" onClick = {() => history.push("/add-order")}><PlusCircleOutlined/></Button>
             </div>
             <Table
                 className="components-table-demo-nested"

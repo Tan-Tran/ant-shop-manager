@@ -15,9 +15,14 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
-.ant-table-container table > thead > tr th {
+.ant-table-container table > thead > tr > th {
   background-color: #009879;
   color: #ffffff;
+}
+
+.sub-table table > thead > tr > th {
+  background-color: #e6e3e3;
+  color: #000000d9;
 }
 
 .ant-layout-content {

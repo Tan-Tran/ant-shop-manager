@@ -175,7 +175,7 @@ const Product  = () =>{
                     !record.isNew? 
                     (editable?
                     (<Space>
-                       <Button type="primary" onClick={() => handleUpdate(record.key)}><CheckOutlined/></Button>
+                        <Button type="primary" onClick={() => handleUpdate(record.key)}><CheckOutlined/></Button>
                         <Button danger onClick={() => cancelUpdate(record.key)}><CloseOutlined/></Button>
                     </Space>):
                     (<Space>
@@ -212,6 +212,30 @@ const Product  = () =>{
         setHasNewProduct(false)
     }
 
+    const addRowProduct = () =>{
+        if(hasNewProduct){
+            message.warning("Please complete add new product")
+            return
+        }
+        const key = Date.now()
+        const newRowProduct = {
+            key: key,
+            name: '',
+            price: 1,
+            quantity: 1,
+            desc:'',
+            origin:'',
+            isNew: true, 
+        }
+        const copyProducts = [...products]
+        copyProducts.push(newRowProduct)
+        setProducts(copyProducts)
+        setHasNewProduct(true)
+        setEditingKeys((previous) =>{
+            return[...previous, key]
+        })
+    }
+
     const saveDataHandler = (values) =>{
         const newData = {
             key: values.key,
@@ -243,6 +267,8 @@ const Product  = () =>{
     }
 
     const handleUpdate = (key) =>{
+
+        console.log(key)
 
         const indexUpdateProduct = updateProducts.findIndex((item) => item.key === key)
         const copyUpdateProducts = [...updateProducts]
@@ -325,30 +351,6 @@ const Product  = () =>{
             })
         }
     })
-
-    const addRowProduct = () =>{
-        if(hasNewProduct){
-            message.warning("Please complete add new product")
-            return
-        }
-        const key = Date.now()
-        const newRowProduct = {
-            key: key,
-            name: '',
-            price: 1,
-            quantity: 1,
-            desc:'',
-            origin:'',
-            isNew: true, 
-        }
-        const copyProducts = [...products]
-        copyProducts.push(newRowProduct)
-        setProducts(copyProducts)
-        setHasNewProduct(true)
-        setEditingKeys((previous) =>{
-            return[...previous, key]
-        })
-    }
     
     return (
         <>
