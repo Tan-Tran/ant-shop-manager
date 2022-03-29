@@ -2,7 +2,7 @@ import React, {useState, useEffect, useRef, useContext} from 'react';
 
 import {Table, Button, Space, Spin, Form, Input, InputNumber, message} from 'antd'
 
-import { DeleteOutlined, EditOutlined, PlusCircleOutlined, LoadingOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, AppstoreAddOutlined, LoadingOutlined, CheckOutlined, CloseOutlined, PlusCircleOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
 
@@ -23,7 +23,6 @@ const EditableRow =  ({index, ...props}) =>{
 
 const EditableCell = ({editing, editable, dataIndex, title, inputType, record, children,saveData,...restProps}) =>{
     const form = useContext(EditableContext)
-
     const changeInputHandler = async(data) =>{
         let newValue = data
         if(inputType !== 'number' && inputType !== 'date'){
@@ -34,14 +33,14 @@ const EditableCell = ({editing, editable, dataIndex, title, inputType, record, c
             form.setFieldsValue({
                 [dataIndex]: newValue
             })
-            const newDataProduct = {...form.getFieldsValue(), key: record.key}
+            const newDataProduct = {...form.getFieldsValue(), key: record.key, isNew: record.isNew}
             saveData(newDataProduct)
         }catch(error){
-            console.log(error.message)
+            console.log("Missing input")
         }
     }
 
-    const inputNode = inputType === 'number'? <InputNumber onChange={changeInputHandler}/>:<Input onChange={changeInputHandler}/> 
+    const inputNode = inputType === 'number'? <InputNumber onChange={changeInputHandler} />:<Input onChange={changeInputHandler}/> 
 
     useEffect(() =>{
         if(editing){
@@ -83,6 +82,8 @@ const Product  = () =>{
 
     const[updateProducts, setUpdateProducts] = useState([])
 
+    const[hasNewProduct, setHasNewProduct] = useState(false)
+
     const fetchProducts = async() =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
         setIsLoading(true)
@@ -104,12 +105,12 @@ const Product  = () =>{
                 })
             }
             setProducts(loadedProducts)
+            setUpdateProducts(loadedProducts)
             setIsLoading(false)
         }catch(error){
             setIsLoading(false)
             console.log("Add product failed")
         }
-
     }
 
     useEffect(() =>{
@@ -171,15 +172,21 @@ const Product  = () =>{
             render: (record) =>{
                 const editable = isEditing(record)
                 return(
-                    editable?
+                    !record.isNew? 
+                    (editable?
                     (<Space>
-                        <Button type="primary" onClick={() => handleUpdate(record.key)}><CheckOutlined/></Button>
-                        <Button danger><CloseOutlined/></Button>
+                       <Button type="primary" onClick={() => handleUpdate(record.key)}><CheckOutlined/></Button>
+                        <Button danger onClick={() => cancelUpdate(record.key)}><CloseOutlined/></Button>
                     </Space>):
                     (<Space>
                         <Button type="primary" onClick={() => {edit(record)}}><EditOutlined/></Button>
                         <Button danger onClick={() => handleDelete(record.key)}><DeleteOutlined/></Button>
-                    </Space>)
+                    </Space>)):(
+                        <Space>
+                            <Button type="primary" onClick={() => handleUpdate(record.key)}><PlusCircleOutlined/></Button>
+                            <Button danger onClick={() =>removeAddNewProduct(record.key)}><CloseOutlined/></Button>
+                        </Space>
+                    )
                 )
             }
         }
@@ -189,10 +196,20 @@ const Product  = () =>{
         return editingKeys.find((key) => key === record.key)? true: false
     }
 
+    const cancelUpdate = (key) =>{
+        setEditingKeys(editingKeys.filter((item) => item !== key))
+    }
+
     const edit = (record) =>{
         setEditingKeys((previous) =>{
             return[...previous, record.key]
         })
+    }
+
+    const removeAddNewProduct = (key) =>{
+        const copyProducts = products.filter((item) => item.key !== key)
+        setProducts(copyProducts)
+        setHasNewProduct(false)
     }
 
     const saveDataHandler = (values) =>{
@@ -203,6 +220,7 @@ const Product  = () =>{
             quantity: values.quantity,
             desc: values.desc,
             origin: values.origin,
+            isNew: values.isNew
         }
 
         if(updateProducts.length === 0){
@@ -231,7 +249,35 @@ const Product  = () =>{
         const newUpdateProducts = copyUpdateProducts.filter((item) => item.key !== key)
 
         if(indexUpdateProduct !== -1){
-            const newData = {
+            if(updateProducts[indexUpdateProduct].isNew){
+                const newData = {
+                    name: updateProducts[indexUpdateProduct].name,
+                    price: updateProducts[indexUpdateProduct].price,
+                    quantity: updateProducts[indexUpdateProduct].quantity,
+                    desc: updateProducts[indexUpdateProduct].desc,
+                    origin: updateProducts[indexUpdateProduct].origin,
+                }
+                const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+                const addNewProduct = async() =>{
+                    const response = await fetch(url,{
+                        method:'POST',
+                        body: JSON.stringify(newData),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    const copyProducts = [...products]
+                    const indexProduct = copyProducts.findIndex(product => product.key === key)
+                    copyProducts[indexProduct] = {...newData, key: key}           
+                    setProducts(copyProducts)
+                    setEditingKeys(editingKeys.filter((item) => item !== key))
+                    setHasNewProduct(false)
+                    message.success('Add a new product successfully')
+                }
+                addNewProduct()
+                return
+            }
+            const dataUpdate = {
                 key: key,
                 name: updateProducts[indexUpdateProduct].name,
                 price: updateProducts[indexUpdateProduct].price,
@@ -246,13 +292,12 @@ const Product  = () =>{
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(newData)
+                        body: JSON.stringify(dataUpdate)
                 })
                 //
                 const copyProducts = [...products]
-                const indexProduct = copyProducts.findIndex(product =>product.key === key)
-                copyProducts[indexProduct] = [newData]
-                console.log(copyProducts)
+                const indexProduct = copyProducts.findIndex(product => product.key === key)
+                copyProducts[indexProduct] = dataUpdate
                 setProducts(copyProducts)
                 //
                 setUpdateProducts(newUpdateProducts)
@@ -279,7 +324,31 @@ const Product  = () =>{
                 saveData: saveDataHandler
             })
         }
-    }) 
+    })
+
+    const addRowProduct = () =>{
+        if(hasNewProduct){
+            message.warning("Please complete add new product")
+            return
+        }
+        const key = Date.now()
+        const newRowProduct = {
+            key: key,
+            name: '',
+            price: 1,
+            quantity: 1,
+            desc:'',
+            origin:'',
+            isNew: true, 
+        }
+        const copyProducts = [...products]
+        copyProducts.push(newRowProduct)
+        setProducts(copyProducts)
+        setHasNewProduct(true)
+        setEditingKeys((previous) =>{
+            return[...previous, key]
+        })
+    }
     
     return (
         <>
@@ -287,7 +356,7 @@ const Product  = () =>{
                 <Spin indicator={loadingIcon}/>
             </div>}           
             <div className="add-icon">
-                <Button type="primary"><PlusCircleOutlined/></Button>
+                <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined /></Button>
             </div> 
                 <Table
                     dataSource={products}
@@ -295,7 +364,7 @@ const Product  = () =>{
                     components={{
                         body: {
                             cell: EditableCell,
-                            row: EditableRow
+                            row: EditableRow,
                         },
                     }}
                 />

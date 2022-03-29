@@ -21,15 +21,11 @@ const Customer = () =>{
 
     const [editRowId, setEditRowId] = useState(null)
 
-    const [rowEdits, setRowEdits] = useState([])
-
     const [hasNewCustomerBefore, setHasNewCustomerBefore] = useState(false)
 
     const [rowData, setRowData] = useState(null)
 
     const [isLoading, setIsLoading] = useState(false)
-
-    console.log(rowEdits)
 
     const fetchCustomers = async () =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json"
