@@ -14,9 +14,9 @@ const EditableRow =  ({index, ...props}) =>{
     const [form] = Form.useForm()
     return (
         <Form form={form} component={false}>
-          <EditableContext.Provider value={form}>
-            <tr {...props}/>
-          </EditableContext.Provider>
+            <EditableContext.Provider value={form}>
+                <tr {...props}/>
+            </EditableContext.Provider>
         </Form>
     );
 }
@@ -26,7 +26,7 @@ const EditableCell = ({editing, editable, dataIndex, title, inputType, record, c
 
     const changeInputHandler = async(data) =>{
         let newValue = data
-        if(inputType !== 'number'){
+        if(inputType !== 'number' && inputType !== 'date'){
             newValue = data.target.value
         }
         try{
@@ -39,9 +39,10 @@ const EditableCell = ({editing, editable, dataIndex, title, inputType, record, c
         }catch(error){
             console.log(error.message)
         }
-
     }
+
     const inputNode = inputType === 'number'? <InputNumber onChange={changeInputHandler}/>:<Input onChange={changeInputHandler}/> 
+
     useEffect(() =>{
         if(editing){
             form.setFieldsValue({
@@ -56,8 +57,8 @@ const EditableCell = ({editing, editable, dataIndex, title, inputType, record, c
             style={{width:200}}
             rules={[
                 {
-                  required: true,
-                  message: `Please Input ${title}!`,
+                    required: true,
+                    message: `Please Input ${title}!`,
                 },
             ]}
         >
@@ -81,7 +82,7 @@ const Product  = () =>{
     const[editingKeys, setEditingKeys] = useState([])
 
     const[updateProducts, setUpdateProducts] = useState([])
-   
+
     const fetchProducts = async() =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
         setIsLoading(true)
@@ -113,7 +114,7 @@ const Product  = () =>{
 
     useEffect(() =>{
         fetchProducts()
-    },[editingKeys])
+    },[])
 
     const handleDelete = (key) =>{
         const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
@@ -187,7 +188,7 @@ const Product  = () =>{
     const isEditing = (record) =>{
         return editingKeys.find((key) => key === record.key)? true: false
     }
-   
+
     const edit = (record) =>{
         setEditingKeys((previous) =>{
             return[...previous, record.key]
@@ -220,21 +221,23 @@ const Product  = () =>{
 
         const copyUpdateProducts = [...updateProducts]
         copyUpdateProducts[indexProduct] = {...newData}
+        setUpdateProducts(copyUpdateProducts)
     }
 
     const handleUpdate = (key) =>{
 
-        const updateProduct = updateProducts.find((item) => item.key === key)
+        const indexUpdateProduct = updateProducts.findIndex((item) => item.key === key)
         const copyUpdateProducts = [...updateProducts]
         const newUpdateProducts = copyUpdateProducts.filter((item) => item.key !== key)
 
-        if(updateProduct){
+        if(indexUpdateProduct !== -1){
             const newData = {
-                name: updateProduct.name,
-                price: updateProduct.price,
-                quantity: updateProduct.quantity,
-                desc: updateProduct.desc,
-                origin: updateProduct.origin,
+                key: key,
+                name: updateProducts[indexUpdateProduct].name,
+                price: updateProducts[indexUpdateProduct].price,
+                quantity: updateProducts[indexUpdateProduct].quantity,
+                desc: updateProducts[indexUpdateProduct].desc,
+                origin: updateProducts[indexUpdateProduct].origin,
             }
             const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
             const updateDate = async () =>{
@@ -245,9 +248,16 @@ const Product  = () =>{
                         },
                         body: JSON.stringify(newData)
                 })
+                //
+                const copyProducts = [...products]
+                const indexProduct = copyProducts.findIndex(product =>product.key === key)
+                copyProducts[indexProduct] = [newData]
+                console.log(copyProducts)
+                setProducts(copyProducts)
+                //
                 setUpdateProducts(newUpdateProducts)
                 setEditingKeys(editingKeys.filter((item) => item !== key))
-                message.success(`Update ${updateProduct.name} successfully`)
+                message.success(`Update ${updateProducts[indexUpdateProduct].name} successfully`)
             }
             updateDate()
         }
@@ -275,7 +285,7 @@ const Product  = () =>{
         <>
             {isLoading && <div className="loading">
                 <Spin indicator={loadingIcon}/>
-             </div>}           
+            </div>}           
             <div className="add-icon">
                 <Button type="primary"><PlusCircleOutlined/></Button>
             </div> 
