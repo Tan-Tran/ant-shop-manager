@@ -359,6 +359,7 @@ const Product  = () =>{
                 <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined /></Button>
             </div> 
                 <Table
+                    pagination={false}
                     dataSource={products}
                     columns={newColumns}
                     components={{

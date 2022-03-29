@@ -2,13 +2,13 @@ import React, {useEffect, useState} from 'react';
 
 import {Table, Button, Space} from 'antd'
 
-import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/icons'
-
-import {useHistory} from 'react-router-dom'
+import { DeleteOutlined, EditOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
 
 const Order = () =>{
+
+    const[products, setProducts] = useState([])
 
     const[customers, setCustomers] = useState([])
 
@@ -16,7 +16,30 @@ const Order = () =>{
 
     const[dataOrders, setDataOrders] = useState([])
 
-    const history = useHistory()
+    const fetchProducts = async() =>{
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+        try{
+            const response = await fetch(url)
+            if(!response.ok){
+                throw new Error("Some thing went wrong!")
+            }
+            const data = await response.json()
+            const loadedProducts = []
+            for(const key in data){
+                loadedProducts.push({
+                    key: key,
+                    name: data[key].name,
+                    price: data[key].price,
+                    quantity: data[key].quantity,
+                    desc: data[key].desc,
+                    origin: data[key].origin,
+                })
+            }
+            setProducts(loadedProducts)
+        }catch(error){
+            console.log("Add product failed")
+        }
+    }
 
     const fetchCustomers = async () =>{
         const response = await fetch("https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json")
@@ -35,10 +58,6 @@ const Order = () =>{
         setCustomers(loadedCustomers)
     }
 
-    useEffect(() =>{
-        fetchCustomers()
-    },[])
-
     const fetchOrders = async () =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json"
         const response =  await fetch(url)
@@ -55,7 +74,9 @@ const Order = () =>{
     }
 
     useEffect(()=>{
+        fetchCustomers()
         fetchOrders()
+        fetchProducts()
     },[])
 
     useEffect(()=>{
@@ -81,30 +102,51 @@ const Order = () =>{
             setDataOrders(data)
         }
     },[customers, orders])
-    
-   
 
+    const expandedRowRender = (row) => { 
+        const orderId = row.key
+        const order = orders.find((order)=> order.key === orderId)
+        const loadedProducts = []
+        const data = order.products
+        for(const item of data){
+            const product = products.find((product)=> product.key === item.key)
+            loadedProducts.push({
+                key: item.key,
+                name: product.name,
+                price: product.price,
+                quantity: item.quantity,
+                desc: product.desc,
+                origin: product.origin,
+            })
+        }
+        const columns = [
+            { title: 'Product', dataIndex: 'name', key: 'name', editable: true,},
+            { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true,},
+            { title: "Price", dataIndex: 'price', key: 'price', editable: true,},
+            { title: 'Origin', dataIndex: 'origin', key: 'origin', editable: true,},
+            { title: 'Description', dataIndex: 'desc', key: 'desc', editable: true,},
+            {
+                title: 'Action',
+                dataIndex: '',
+                key: '',
+                render: (record) =>{
+                    return (
+                        <Space>
+                            <Button type="primary"><PlusCircleOutlined/></Button>
+                            <Button danger><MinusCircleOutlined/></Button>
+                        </Space>
+                    )
+                }
+            }
+        ]
+        return <Table columns={columns} dataSource={loadedProducts} pagination={false} />;
+    }
+    
     const columns = [
-        {
-            title: 'Customer',
-            dataIndex: 'customerName',
-            key: 'customerName',
-        },
-        {
-            title: 'Product',
-            dataIndex: 'productName',
-            key: 'productName'
-        },
-        {
-            title: 'Quantity',
-            dataIndex: 'quantity',
-            key: 'quantity'
-        },
-        {
-            title: 'Total',
-            dataIndex: 'total',
-            key: 'total'
-        },
+        { title: 'Customer', dataIndex: 'customerName', key: 'customerName', editable: true,},
+        { title: 'Product', dataIndex: 'productName', key: 'productName', editable: true,},
+        { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true,},
+        { title: 'Total', dataIndex: 'total', key: 'total', editable: false,},
         {
             title: 'Action',
             dataIndex: '',
@@ -112,24 +154,29 @@ const Order = () =>{
             render: (record) =>{
                 return (
                     <Space>
-                        <Button type="primary"
-                            onClick={() => history.push(`/order/${record.key}`)}
-                        key={record.key}><EditOutlined/></Button>
+                        <Button type="primary"><EditOutlined/></Button>
                         <Button danger><DeleteOutlined/></Button>
                     </Space>
                 )
             }
-        }
+        }        
     ]
+
+    const addNewOrder = () =>{
+        console.log("abc")
+    }
 
     return(
         <>
             <div className="add-icon">
-                <Button type="primary" onClick = {() =>{
-                    history.push("/add-order")
-                }}><PlusCircleOutlined/></Button>
+                <Button type="primary" onClick = {addNewOrder}><PlusCircleOutlined/></Button>
             </div>
-            <Table dataSource={dataOrders} columns={columns}/>
+            <Table
+                className="components-table-demo-nested"
+                expandable={{ expandedRowRender }}
+                dataSource={dataOrders} 
+                columns={columns}
+            />
         </>
     )
 }
