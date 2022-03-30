@@ -204,11 +204,11 @@ const Product  = () =>{
         })
         setHasNewProduct(true)
         const newProducts = [...products, {...newRowData}]
+        // setUpdateProducts(newProducts)
         setProducts(newProducts)
     }
 
     const getData = (values) =>{
-        form.validateFields()
         const newData = {
             key: values.key,
             name: values.name,
@@ -218,7 +218,6 @@ const Product  = () =>{
             origin: values.origin,
             isNew: values.isNew
         }
-
         if(updateProducts.length === 0){
             setUpdateProducts([{...newData}])
             return
@@ -227,6 +226,7 @@ const Product  = () =>{
         const indexProduct = updateProducts.findIndex((item) => item.key === newData.key)
 
         if(indexProduct === -1){
+            console.log("abc")
             const newUpdateProducts = [...updateProducts, {...newData}]
             setUpdateProducts(newUpdateProducts)
             return
@@ -239,6 +239,8 @@ const Product  = () =>{
 
     const saveRecord = (key) =>{
 
+        console.log(updateProducts)
+
         const indexProductUpdate = updateProducts.findIndex((item) => item.key === key)
 
         const newData = {
@@ -249,7 +251,7 @@ const Product  = () =>{
             origin: updateProducts[indexProductUpdate].origin,
         }
 
-        if(updateProducts[indexProductUpdate].isNew){            
+        if(updateProducts[indexProductUpdate].isNew){         
             const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
             const addNewProduct = async() =>{
                 const response = await fetch(url,{
@@ -350,7 +352,8 @@ const Product  = () =>{
                 }
             })
         }
-        updateAllRecord()        
+        updateAllRecord()
+        setProducts(updateProducts)      
         setEditingKeys([])
         setIsSaveAllRecord(false)
     }
@@ -378,7 +381,7 @@ const Product  = () =>{
             />
             <div className="add-icon">
                 <Space>
-                    {!isSaveAllRecord && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
+                    {!isSaveAllRecord && products.length !==0 && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
                     {isSaveAllRecord && <Button type="primary" onClick={saveAllRecord}>Save all record</Button>}
                     {isSaveAllRecord && <Button danger onClick={cancelEditMultiple}>Cancel edit multiple</Button>}
                 </Space>
