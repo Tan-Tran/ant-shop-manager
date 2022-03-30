@@ -21,7 +21,7 @@ const EditableRow =  ({index, ...props}) =>{
     );
 }
 
-const EditableCell = ({editing, editable, dataIndex, title, inputType, record, children,saveData,...restProps}) =>{
+const EditableCell = ({editing, editable, dataIndex, title, inputType, record, children, getData,...restProps}) =>{
     const form = useContext(EditableContext)
     const changeInputHandler = async(data) =>{
         let newValue = data
@@ -34,13 +34,12 @@ const EditableCell = ({editing, editable, dataIndex, title, inputType, record, c
                 [dataIndex]: newValue
             })
             const newDataProduct = {...form.getFieldsValue(), key: record.key, isNew: record.isNew}
-            saveData(newDataProduct)
+            getData(newDataProduct)
         }catch(error){
-            console.log("Missing input")
+            console.log("empty input")
         }
     }
-
-    const inputNode = inputType === 'number'? <InputNumber onChange={changeInputHandler} />:<Input onChange={changeInputHandler}/> 
+    const inputNode = inputType === 'number'? <InputNumber onChange={changeInputHandler} min={1}/>:<Input onChange={changeInputHandler}/> 
 
     useEffect(() =>{
         if(editing){
@@ -54,12 +53,7 @@ const EditableCell = ({editing, editable, dataIndex, title, inputType, record, c
         <Form.Item
             name = {dataIndex}
             style={{width:200}}
-            rules={[
-                {
-                    required: true,
-                    message: `Please Input ${title}!`,
-                },
-            ]}
+            rules={inputType === "number" ? [{ type: 'number', min: 1, required: true}]:[{required: true, message: `Please Input ${title}!`}]}
         >
             {inputNode}
         </Form.Item>
@@ -83,6 +77,8 @@ const Product  = () =>{
     const[updateProducts, setUpdateProducts] = useState([])
 
     const[hasNewProduct, setHasNewProduct] = useState(false)
+
+    const[isSaveAllRecord, setIsSaveAllRecord] = useState(false)
 
     const fetchProducts = async() =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
@@ -117,7 +113,7 @@ const Product  = () =>{
         fetchProducts()
     },[])
 
-    const handleDelete = (key) =>{
+    const deleteRecord = (key) =>{
         const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
 
         const removeProduct = async() =>{
@@ -135,36 +131,11 @@ const Product  = () =>{
     }
 
     const columns = [
-        {
-            title: 'Name', 
-            dataIndex: 'name', 
-            key: 'name',
-            editable: true,
-        },
-        {
-            title: 'Quantity', 
-            dataIndex: 'quantity', 
-            key: 'quantity',
-            editable: true,
-        },
-        {
-            title: "Price", 
-            dataIndex: 'price',
-            key: 'price',
-            editable: true,
-        },
-        {
-            title: 'Origin', 
-            dataIndex: 'origin',
-            key: 'origin',
-            editable: true,
-        },
-        {
-            title: 'Description',
-            dataIndex: 'desc',
-            key: 'desc',
-            editable: true,
-        },
+        { title: 'Name', dataIndex: 'name', key: 'name', editable: true,},
+        { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true,},
+        { title: "Price", dataIndex: 'price', key: 'price', editable: true,},
+        { title: 'Origin', dataIndex: 'origin', key: 'origin', editable: true,},
+        { title: 'Description', dataIndex: 'desc', key: 'desc',editable: true,},
         {
             title: "Action",
             dataIndex: '',
@@ -175,16 +146,16 @@ const Product  = () =>{
                     !record.isNew? 
                     (editable?
                     (<Space>
-                        <Button type="primary" onClick={() => handleUpdate(record.key)}><CheckOutlined/></Button>
-                        <Button danger onClick={() => cancelUpdate(record.key)}><CloseOutlined/></Button>
+                        <Button type="primary" onClick={() => saveRecord(record.key)}><CheckOutlined/></Button>
+                        <Button danger onClick={() => cancelUpdateRecord(record.key)}><CloseOutlined/></Button>
                     </Space>):
                     (<Space>
-                        <Button type="primary" onClick={() => {edit(record)}}><EditOutlined/></Button>
-                        <Button danger onClick={() => handleDelete(record.key)}><DeleteOutlined/></Button>
+                        <Button type="primary" onClick={() => {editRecord(record)}}><EditOutlined/></Button>
+                        <Button danger onClick={() => deleteRecord(record.key)}><DeleteOutlined/></Button>
                     </Space>)):(
                         <Space>
-                            <Button type="primary" onClick={() => handleUpdate(record.key)}><PlusCircleOutlined/></Button>
-                            <Button danger onClick={() =>removeAddNewProduct(record.key)}><CloseOutlined/></Button>
+                            <Button type="primary" onClick={() => saveRecord(record.key)}><PlusCircleOutlined/></Button>
+                            <Button danger onClick={() => cancelAddNewRecord(record.key)}><CloseOutlined/></Button>
                         </Space>
                     )
                 )
@@ -192,33 +163,34 @@ const Product  = () =>{
         }
     ]
 
-    const isEditing = (record) =>{
-        return editingKeys.find((key) => key === record.key)? true: false
-    }
-
-    const cancelUpdate = (key) =>{
-        setEditingKeys(editingKeys.filter((item) => item !== key))
-    }
-
-    const edit = (record) =>{
+    const editRecord = (record) =>{
         setEditingKeys((previous) =>{
             return[...previous, record.key]
         })
     }
 
-    const removeAddNewProduct = (key) =>{
-        const copyProducts = products.filter((item) => item.key !== key)
-        setProducts(copyProducts)
+    const isEditing = (record) =>{
+        return editingKeys.find((key) => key === record.key)? true: false
+    }
+
+    const cancelUpdateRecord = (key) =>{
+        setEditingKeys(editingKeys.filter((item) => item !== key))
+        setIsSaveAllRecord(false)
+    }
+    
+    const cancelAddNewRecord = (key) =>{
+        const productsAfterRemoveNewRow = products.filter((item) => item.key !== key)
+        setProducts(productsAfterRemoveNewRow)
         setHasNewProduct(false)
     }
 
     const addRowProduct = () =>{
         if(hasNewProduct){
-            message.warning("Please complete add new product")
+            message.warning("Please complete add new product before")
             return
         }
         const key = Date.now()
-        const newRowProduct = {
+        const newRowData = {
             key: key,
             name: '',
             price: 1,
@@ -227,16 +199,16 @@ const Product  = () =>{
             origin:'',
             isNew: true, 
         }
-        const copyProducts = [...products]
-        copyProducts.push(newRowProduct)
-        setProducts(copyProducts)
-        setHasNewProduct(true)
         setEditingKeys((previous) =>{
             return[...previous, key]
         })
+        setHasNewProduct(true)
+        const newProducts = [...products, {...newRowData}]
+        setProducts(newProducts)
     }
 
-    const saveDataHandler = (values) =>{
+    const getData = (values) =>{
+        form.validateFields()
         const newData = {
             key: values.key,
             name: values.name,
@@ -255,86 +227,75 @@ const Product  = () =>{
         const indexProduct = updateProducts.findIndex((item) => item.key === newData.key)
 
         if(indexProduct === -1){
-            const copyUpdateProducts = [...updateProducts]
-            copyUpdateProducts.push(newData)
-            setUpdateProducts(copyUpdateProducts)
+            const newUpdateProducts = [...updateProducts, {...newData}]
+            setUpdateProducts(newUpdateProducts)
             return
         }
 
-        const copyUpdateProducts = [...updateProducts]
-        copyUpdateProducts[indexProduct] = {...newData}
-        setUpdateProducts(copyUpdateProducts)
+        const newUpdateProducts = [...updateProducts]
+        newUpdateProducts[indexProduct] = {...newData}
+        setUpdateProducts(newUpdateProducts)
     }
 
-    const handleUpdate = (key) =>{
+    const saveRecord = (key) =>{
 
-        console.log(key)
+        const indexProductUpdate = updateProducts.findIndex((item) => item.key === key)
 
-        const indexUpdateProduct = updateProducts.findIndex((item) => item.key === key)
-        const copyUpdateProducts = [...updateProducts]
-        const newUpdateProducts = copyUpdateProducts.filter((item) => item.key !== key)
-
-        if(indexUpdateProduct !== -1){
-            if(updateProducts[indexUpdateProduct].isNew){
-                const newData = {
-                    name: updateProducts[indexUpdateProduct].name,
-                    price: updateProducts[indexUpdateProduct].price,
-                    quantity: updateProducts[indexUpdateProduct].quantity,
-                    desc: updateProducts[indexUpdateProduct].desc,
-                    origin: updateProducts[indexUpdateProduct].origin,
-                }
-                const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
-                const addNewProduct = async() =>{
-                    const response = await fetch(url,{
-                        method:'POST',
-                        body: JSON.stringify(newData),
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    const copyProducts = [...products]
-                    const indexProduct = copyProducts.findIndex(product => product.key === key)
-                    copyProducts[indexProduct] = {...newData, key: key}           
-                    setProducts(copyProducts)
-                    setEditingKeys(editingKeys.filter((item) => item !== key))
-                    setHasNewProduct(false)
-                    message.success('Add a new product successfully')
-                }
-                addNewProduct()
-                return
-            }
-            const dataUpdate = {
-                key: key,
-                name: updateProducts[indexUpdateProduct].name,
-                price: updateProducts[indexUpdateProduct].price,
-                quantity: updateProducts[indexUpdateProduct].quantity,
-                desc: updateProducts[indexUpdateProduct].desc,
-                origin: updateProducts[indexUpdateProduct].origin,
-            }
-            const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
-            const updateDate = async () =>{
-                const response = await fetch(url,{
-                    method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(dataUpdate)
-                })
-                //
-                const copyProducts = [...products]
-                const indexProduct = copyProducts.findIndex(product => product.key === key)
-                copyProducts[indexProduct] = dataUpdate
-                setProducts(copyProducts)
-                //
-                setUpdateProducts(newUpdateProducts)
-                setEditingKeys(editingKeys.filter((item) => item !== key))
-                message.success(`Update ${updateProducts[indexUpdateProduct].name} successfully`)
-            }
-            updateDate()
+        const newData = {
+            name: updateProducts[indexProductUpdate].name,
+            price: updateProducts[indexProductUpdate].price,
+            quantity: updateProducts[indexProductUpdate].quantity,
+            desc: updateProducts[indexProductUpdate].desc,
+            origin: updateProducts[indexProductUpdate].origin,
         }
+
+        if(updateProducts[indexProductUpdate].isNew){            
+            const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+            const addNewProduct = async() =>{
+                const response = await fetch(url,{
+                    method:'POST',
+                    body: JSON.stringify(newData),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                const newProducts = [...products]
+                const indexNewProduct = newProducts.findIndex(product => product.key === key)
+                newProducts[indexNewProduct] = {...newData, key: key}
+                setUpdateProducts(updateProducts.filter((product) => product.key !== key))
+                setProducts(newProducts)
+                setEditingKeys(editingKeys.filter((item) => item !== key))
+                setHasNewProduct(false)
+                message.success('Add a new product successfully')
+                fetchProducts()
+            }
+            addNewProduct()
+            return
+        }
+
+        const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
+        const updateDate = async () =>{
+            const response = await fetch(url,{
+                method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newData)
+            })
+            //
+            const newProducts = [...products]
+            const indexProduct = newProducts.findIndex(product => product.key === key)
+            newProducts[indexProduct] = {...newData, key: key}
+            setProducts(newProducts)
+            //
+            setUpdateProducts(updateProducts.filter((product) => product.key !== key))
+            setEditingKeys(editingKeys.filter((item) => item !== key))
+            message.success(`Update ${updateProducts[indexProductUpdate].name} successfully`)
+        }
+        updateDate()
     }    
 
-    const newColumns = columns.map((column) =>{
+    const customColumns = columns.map((column) =>{
         if(!column.editable){
             return column
         }
@@ -347,10 +308,54 @@ const Product  = () =>{
                 dataIndex: column.dataIndex,
                 editable: column.editable,
                 editing: isEditing(record),
-                saveData: saveDataHandler
+                getData,
             })
         }
     })
+
+    const editMultiple = () =>{
+        const productKeys = []
+        for(const product of products){            
+            productKeys.push(product.key)           
+        }
+        setEditingKeys(productKeys)
+        setIsSaveAllRecord(true)
+    }
+
+    const cancelEditMultiple = () =>{
+        setEditingKeys([])
+        setIsSaveAllRecord(false)
+    }
+
+    const saveAllRecord = () =>{
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+        const allRecordUpdate = {}
+        
+        for(const product of updateProducts){
+            const key = product.key
+            allRecordUpdate[key] = {
+                desc: product.desc,
+                name: product.name,
+                origin: product.origin,
+                price: product.price,
+                quantity: product.quantity,
+            }
+        }
+        const updateAllRecord = async () =>{
+            const response = await fetch(url,{
+                method: 'PUT',
+                body: JSON.stringify(allRecordUpdate),
+                headers:{ 
+                    'Content-Type': 'application/json'
+                }
+            })
+        }
+        updateAllRecord()        
+        setEditingKeys([])
+        setIsSaveAllRecord(false)
+    }
+
+    const form = Form.useForm()
     
     return (
         <>
@@ -358,19 +363,26 @@ const Product  = () =>{
                 <Spin indicator={loadingIcon}/>
             </div>}           
             <div className="add-icon">
-                <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined /></Button>
-            </div> 
-                <Table
-                    pagination={false}
-                    dataSource={products}
-                    columns={newColumns}
-                    components={{
-                        body: {
-                            cell: EditableCell,
-                            row: EditableRow,
-                        },
-                    }}
-                />
+                <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined/></Button>
+            </div>
+            <Table
+                pagination={false}
+                dataSource={products}
+                columns={customColumns}
+                components={{
+                    body: {
+                        cell: EditableCell,
+                        row: EditableRow,
+                    },
+                }}
+            />
+            <div className="add-icon">
+                <Space>
+                    {!isSaveAllRecord && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
+                    {isSaveAllRecord && <Button type="primary" onClick={saveAllRecord}>Save all record</Button>}
+                    {isSaveAllRecord && <Button danger onClick={cancelEditMultiple}>Cancel edit multiple</Button>}
+                </Space>
+            </div>
         </>
         
     )

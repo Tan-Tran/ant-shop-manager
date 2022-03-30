@@ -1,12 +1,43 @@
 import React, {useEffect, useState} from 'react';
 
-import {Table, Button, Space, Tag} from 'antd'
+import {Table, Button, Space, Tag, Form, Input, Select} from 'antd'
 
 import { DeleteOutlined, EditOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
 
 import 'antd/dist/antd.css'
 
 import {useHistory} from 'react-router-dom'
+
+const {Option} = Select
+
+const EditingCellTable = ({editable, editing, dataIndex, title, inputType, record, index, children, products,...restProps}) =>{
+    let inputNode = ''
+    if(inputType === 'select'){
+        inputNode = <Select style={{ width: 200 }} placeholder="select product">
+                        {products.map((product) =>{
+                            return (
+                                <Option key={product.key} value={product.key}>{product.name}</Option>
+                            )
+                        })}
+                    </Select>
+    }
+    if(inputType === 'text'){
+        inputNode = <Input/>
+    }
+    const content = editable && editing?
+        <Form.Item
+            name = {dataIndex}
+            style = {{width: 200 }}
+        >
+            {inputNode}
+        </Form.Item>
+        :children
+    return(
+        <td {...restProps}>
+            {content}
+        </td>
+    )
+}
 
 const Order = () =>{
 
@@ -19,6 +50,8 @@ const Order = () =>{
     const[orders, setOrders] = useState([])
 
     const[dataOrders, setDataOrders] = useState([])
+
+    const [form] = Form.useForm()
 
     const fetchProducts = async() =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
@@ -173,7 +206,7 @@ const Order = () =>{
             render: (record) =>{
                 return (
                     <Space>
-                        <Button type="primary"><EditOutlined/></Button>
+                        <Button type="primary" onClick={() => editRecord(record)}><EditOutlined/></Button>
                         <Button danger><DeleteOutlined/></Button>
                     </Space>
                 )
@@ -181,21 +214,46 @@ const Order = () =>{
         }        
     ]
 
-    const addNewOrder = () =>{
-        console.log("abc")
+    const[editingKey, setEditingKey] = useState(null)
+
+    const editRecord = (record) =>{
+        setEditingKey(record.key)
     }
+    
+    const isEditing = (record) =>{
+        return editingKey === record.key? true: false
+    }
+
+    const customColumns = columns.map((column) =>{
+        if(!column.editable){
+            return column
+        }
+        return{
+            ...column,
+            onCell: (record) =>({
+                record,
+                inputType: column.dataIndex === 'productName' ? 'select' : 'text',
+                dataIndex: column.dataIndex,
+                title: column.title,
+                editing: isEditing(record),
+                products,
+            })
+        }
+    })
 
     return(
         <>
             <div className="add-icon">
                 <Button type="primary" onClick = {() => history.push("/add-order")}><PlusCircleOutlined/></Button>
             </div>
-            <Table
-                className="components-table-demo-nested"
-                expandable={{ expandedRowRender }}
-                dataSource={dataOrders} 
-                columns={columns}
-            />
+            <Form form={form}>    
+                <Table
+                    className="components-table-demo-nested"
+                    expandable={{ expandedRowRender }}
+                    dataSource={dataOrders} 
+                    columns={columns}
+                />
+            </Form>
         </>
     )
 }
