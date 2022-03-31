@@ -10,7 +10,7 @@ import {useHistory} from 'react-router-dom'
 
 const {Option} = Select
 
-const EditingCellTable = ({editable, editing, dataIndex, title, inputType, record, index, children, products,...restProps}) =>{
+const EditableCell = ({editable, editing, dataIndex, title, inputType, record, index, children, products,...restProps}) =>{
     let inputNode = ''
     if(inputType === 'select'){
         inputNode = <Select style={{ width: 200 }} placeholder="select product">
@@ -185,6 +185,7 @@ const Order = () =>{
             title: 'Product', 
             dataIndex: 'productName', 
             key: 'productName',
+            editable: true,
             render: (productNames) =>(
                 <>
                     {productNames.map((productName) =>{
@@ -241,17 +242,31 @@ const Order = () =>{
         }
     })
 
+    const addNewRow = () =>{
+        const newOrder = {
+            customerName:'',
+            productName:'',
+        }
+        setOrders([...orders,{...newOrder}])
+    }
+
     return(
         <>
             <div className="add-icon">
-                <Button type="primary" onClick = {() => history.push("/add-order")}><PlusCircleOutlined/></Button>
+                {/* <Button type="primary" onClick = {() => history.push("/add-order")}><PlusCircleOutlined/></Button> */}
+                <Button type="primary" onClick = {addNewRow}><PlusCircleOutlined/></Button>
             </div>
             <Form form={form}>    
                 <Table
+                    components={{
+                        body: {
+                            cell: EditableCell,
+                        },
+                    }}
                     className="components-table-demo-nested"
                     expandable={{ expandedRowRender }}
+                    columns={customColumns}
                     dataSource={dataOrders} 
-                    columns={columns}
                 />
             </Form>
         </>
