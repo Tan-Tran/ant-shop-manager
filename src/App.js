@@ -3,6 +3,7 @@ import ShopHeader from './components/common/Header'
 import ShopSidebar from './components/common/Sidebar'
 import Customer from './components/detail/Customer'
 import Product from './components/detail/Product'
+import ProductUpdate from './components/detail/ProductUpdate'
 import Order from './components/detail/Order'
 
 import AddCustomer from './components/pages/AddCustomer'
@@ -49,7 +50,7 @@ function App() {
                       </Route>
 
                       <Route path="/product" exact>
-                        <Product/>
+                        <ProductUpdate/>
                       </Route>
 
                       <Route path="/order" exact>
