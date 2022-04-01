@@ -271,7 +271,18 @@ const Product  = () =>{
     }
 
     const submitHandler = () =>{
-        console.log(form.getFieldsValue())
+        const data = form.getFieldsValue()
+        const updateProducts = []
+        for(const key in data){
+            updateProducts.push({
+                key: key,
+                name: data[key].name,
+                price: data[key].price,
+                quantity: data[key].quantity,
+                desc: data[key].desc,
+                origin: data[key].origin,
+            })
+        }
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
         const updateAllRecord = async () =>{
             const response = await fetch(url,{
@@ -282,7 +293,8 @@ const Product  = () =>{
                 }
             })
         }
-        updateAllRecord()    
+        updateAllRecord()  
+        setProducts(updateProducts)  
         setEditingKeys([])
         setIsSaveAllRecord(false)
     }
@@ -311,9 +323,7 @@ const Product  = () =>{
             {isLoading && <div className="loading">
                 <Spin indicator={loadingIcon}/>
             </div>}           
-            <div className="add-icon">
-                <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined/></Button>
-            </div>
+            
             <Form form={form} validateMessages={validateMessages} onFinish={submitHandler}>
                 <Table
                     pagination={false}
@@ -325,7 +335,11 @@ const Product  = () =>{
                         },
                     }}
                 />
-                <div className="add-icon">
+                <div style={{width: '100%'}}>
+                    <Button style={{width: '100%', color: 'rgba(0, 0, 0, 0.85)', backgroundColor: '#cccc', borderColor:'#cccc'}} type="primary" onClick={addRowProduct}><AppstoreAddOutlined/> Add new record</Button>
+                </div>
+                <br/>
+                <div>
                     <Space>
                         {!isSaveAllRecord && products.length !==0 && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
                         {isSaveAllRecord && <Button type="primary" htmlType="submit">Save all record</Button>}

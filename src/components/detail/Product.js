@@ -8,75 +8,63 @@ import 'antd/dist/antd.css'
 
 const loadingIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />
 
-const EditableContext = React.createContext(null)
+const validateMessages = {
+    required: '${label} is required!',
+    types: {
+        email: '${label} is not a valid email!',
+        number: '${label} is not a valid number!',
+    },
+    number: {
+        range: '${label} must be between ${min} and ${max}',
+    },
+};
 
-const EditableRow =  ({index, ...props}) =>{
-    const [form] = Form.useForm()
-    return (
-        <Form form={form} component={false}>
-            <EditableContext.Provider value={form}>
-                <tr {...props}/>
-            </EditableContext.Provider>
-        </Form>
-    );
-}
+const EditableCell = ({editing, editable, dataIndex, title, inputType, record, index, children,...restProps}) => {
+        const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
 
-const EditableCell = ({editing, editable, dataIndex, title, inputType, record, children, getData,...restProps}) =>{
-    const form = useContext(EditableContext)
-    const changeInputHandler = async(data) =>{
-        let newValue = data
-        if(inputType !== 'number' && inputType !== 'date'){
-            newValue = data.target.value
+        let childNode = children;
+
+        if (editable) {
+            childNode = editing ? (
+            <Form.Item
+                style={{
+                    margin: 0,
+                }}
+                name={[record.key, dataIndex]}
+                rules={[
+                    {
+                        required: true,
+                        message: `${title} is required.`,
+                    },
+                ]}
+            >
+                {inputNode}
+            </Form.Item>
+            ) : (
+            <div
+                className="editable-cell-value-wrap"
+                style={{
+                    paddingRight: 24,
+                }}
+            >
+                {children}
+            </div>
+            );
         }
-        try{
-            await form.validateFields();
-            form.setFieldsValue({
-                [dataIndex]: newValue
-            })
-            const newDataProduct = {...form.getFieldsValue(), key: record.key, isNew: record.isNew}
-            getData(newDataProduct)
-        }catch(error){
-            console.log("empty input")
-        }
-    }
-    const inputNode = inputType === 'number'? <InputNumber onChange={changeInputHandler} min={1}/>:<Input onChange={changeInputHandler}/> 
 
-    useEffect(() =>{
-        if(editing){
-            form.setFieldsValue({
-                [dataIndex]: record[dataIndex]
-            });
-        }
-    },[editing])
-
-    const content = editable && editing?
-        <Form.Item
-            name = {dataIndex}
-            style={{width:200}}
-            rules={inputType === "number" ? [{ type: 'number', min: 1, required: true}]:[{required: true, message: `Please Input ${title}!`}]}
-        >
-            {inputNode}
-        </Form.Item>
-        : children
-    return(
-        <td {...restProps}>
-            {content}
-        </td>
-    )
-}
+    return <td {...restProps}>{childNode}</td>;
+};
 
 
 const Product  = () =>{
+
+    const [form] = Form.useForm()
 
     const[products, setProducts] = useState([])
 
     const[isLoading, setIsLoading] = useState(false)
 
     const[editingKeys, setEditingKeys] = useState([])
-
-    const[updateProducts, setUpdateProducts] = useState([])
-
-    const[hasNewProduct, setHasNewProduct] = useState(false)
 
     const[isSaveAllRecord, setIsSaveAllRecord] = useState(false)
 
@@ -101,7 +89,6 @@ const Product  = () =>{
                 })
             }
             setProducts(loadedProducts)
-            setUpdateProducts(loadedProducts)
             setIsLoading(false)
         }catch(error){
             setIsLoading(false)
@@ -164,6 +151,16 @@ const Product  = () =>{
     ]
 
     const editRecord = (record) =>{
+        const key = record.key        
+        form.setFieldsValue({
+            [`${key}`]:{
+                name: record.name,
+                quantity: record.quantity,
+                price: record.price,
+                origin: record.origin,
+                desc: record.desc,
+            }
+        });
         setEditingKeys((previous) =>{
             return[...previous, record.key]
         })
@@ -175,20 +172,14 @@ const Product  = () =>{
 
     const cancelUpdateRecord = (key) =>{
         setEditingKeys(editingKeys.filter((item) => item !== key))
-        setIsSaveAllRecord(false)
     }
     
     const cancelAddNewRecord = (key) =>{
         const productsAfterRemoveNewRow = products.filter((item) => item.key !== key)
         setProducts(productsAfterRemoveNewRow)
-        setHasNewProduct(false)
     }
 
     const addRowProduct = () =>{
-        if(hasNewProduct){
-            message.warning("Please complete add new product before")
-            return
-        }
         const key = Date.now()
         const newRowData = {
             key: key,
@@ -202,55 +193,18 @@ const Product  = () =>{
         setEditingKeys((previous) =>{
             return[...previous, key]
         })
-        setHasNewProduct(true)
         const newProducts = [...products, {...newRowData}]
         setProducts(newProducts)
     }
 
-    const getData = (values) =>{
-        const newData = {
-            key: values.key,
-            name: values.name,
-            price: values.price,
-            quantity: values.quantity,
-            desc: values.desc,
-            origin: values.origin,
-            isNew: values.isNew
-        }
-        if(updateProducts.length === 0){
-            setUpdateProducts([{...newData}])
-            return
-        }
-        
-        const indexProduct = updateProducts.findIndex((item) => item.key === newData.key)
+    const saveRecord = async (key) =>{
+        await form.validateFields()
 
-        if(indexProduct === -1){
-            console.log("abc")
-            const newUpdateProducts = [...updateProducts, {...newData}]
-            setUpdateProducts(newUpdateProducts)
-            return
-        }
+        const isNewRecord = products.find((product) => product.key === key).isNew
 
-        const newUpdateProducts = [...updateProducts]
-        newUpdateProducts[indexProduct] = {...newData}
-        setUpdateProducts(newUpdateProducts)
-    }
+        const newData = form.getFieldValue(key)
 
-    const saveRecord = (key) =>{
-
-        console.log(updateProducts)
-
-        const indexProductUpdate = updateProducts.findIndex((item) => item.key === key)
-
-        const newData = {
-            name: updateProducts[indexProductUpdate].name,
-            price: updateProducts[indexProductUpdate].price,
-            quantity: updateProducts[indexProductUpdate].quantity,
-            desc: updateProducts[indexProductUpdate].desc,
-            origin: updateProducts[indexProductUpdate].origin,
-        }
-
-        if(updateProducts[indexProductUpdate].isNew){         
+        if(isNewRecord){
             const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
             const addNewProduct = async() =>{
                 const response = await fetch(url,{
@@ -260,20 +214,18 @@ const Product  = () =>{
                         'Content-Type': 'application/json'
                     }
                 })
+                const data = await response.json()
+                const id = data.name
                 const newProducts = [...products]
                 const indexNewProduct = newProducts.findIndex(product => product.key === key)
-                newProducts[indexNewProduct] = {...newData, key: key}
-                setUpdateProducts(updateProducts.filter((product) => product.key !== key))
+                newProducts[indexNewProduct] = {...newData, key: id}
                 setProducts(newProducts)
                 setEditingKeys(editingKeys.filter((item) => item !== key))
-                setHasNewProduct(false)
                 message.success('Add a new product successfully')
-                fetchProducts()
             }
             addNewProduct()
             return
         }
-
         const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
         const updateDate = async () =>{
             const response = await fetch(url,{
@@ -288,13 +240,66 @@ const Product  = () =>{
             const indexProduct = newProducts.findIndex(product => product.key === key)
             newProducts[indexProduct] = {...newData, key: key}
             setProducts(newProducts)
-            //
-            setUpdateProducts(updateProducts.filter((product) => product.key !== key))
             setEditingKeys(editingKeys.filter((item) => item !== key))
-            message.success(`Update ${updateProducts[indexProductUpdate].name} successfully`)
+            message.success(`Update successfully`)
         }
         updateDate()
-    }    
+    }
+
+    const editMultiple = () =>{
+        for(const product of products){
+            const key = product.key        
+            form.setFieldsValue({
+                [`${key}`]:{
+                    name: product.name,
+                    quantity: product.quantity,
+                    price: product.price,
+                    origin: product.origin,
+                    desc: product.desc,
+                }
+            });
+            setEditingKeys((previous) =>{
+                return[...previous, product.key]
+            })
+        }
+        setIsSaveAllRecord(true)
+    }
+
+    const cancelEditMultiple = () =>{
+        setEditingKeys([])
+        setIsSaveAllRecord(false)
+    }
+
+    const submitHandler = () =>{
+        const data = form.getFieldsValue()
+        const updateProducts = []
+        for(const key in data){
+            updateProducts.push({
+                key: key,
+                name: data[key].name,
+                price: data[key].price,
+                quantity: data[key].quantity,
+                desc: data[key].desc,
+                origin: data[key].origin,
+            })
+        }
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+        const updateAllRecord = async () =>{
+            const response = await fetch(url,{
+                method: 'PUT',
+                body: JSON.stringify(form.getFieldsValue()),
+                headers:{ 
+                    'Content-Type': 'application/json'
+                }
+            })
+        }
+        updateAllRecord()  
+        setProducts(updateProducts)  
+        setEditingKeys([])
+        setIsSaveAllRecord(false)
+    }
+
+
 
     const customColumns = columns.map((column) =>{
         if(!column.editable){
@@ -309,82 +314,39 @@ const Product  = () =>{
                 dataIndex: column.dataIndex,
                 editable: column.editable,
                 editing: isEditing(record),
-                getData,
             })
         }
     })
-
-    const editMultiple = () =>{
-        const productKeys = []
-        for(const product of products){            
-            productKeys.push(product.key)           
-        }
-        setEditingKeys(productKeys)
-        setIsSaveAllRecord(true)
-    }
-
-    const cancelEditMultiple = () =>{
-        setEditingKeys([])
-        setIsSaveAllRecord(false)
-    }
-
-    const saveAllRecord = () =>{
-        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
-        const allRecordUpdate = {}
-        
-        for(const product of updateProducts){
-            const key = product.key
-            allRecordUpdate[key] = {
-                desc: product.desc,
-                name: product.name,
-                origin: product.origin,
-                price: product.price,
-                quantity: product.quantity,
-            }
-        }
-        const updateAllRecord = async () =>{
-            const response = await fetch(url,{
-                method: 'PUT',
-                body: JSON.stringify(allRecordUpdate),
-                headers:{ 
-                    'Content-Type': 'application/json'
-                }
-            })
-        }
-        updateAllRecord()
-        setProducts(updateProducts)      
-        setEditingKeys([])
-        setIsSaveAllRecord(false)
-    }
-
-    const form = Form.useForm()
     
     return (
         <>
             {isLoading && <div className="loading">
                 <Spin indicator={loadingIcon}/>
             </div>}           
-            <div className="add-icon">
-                <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined/></Button>
-            </div>
-            <Table
-                pagination={false}
-                dataSource={products}
-                columns={customColumns}
-                components={{
-                    body: {
-                        cell: EditableCell,
-                        row: EditableRow,
-                    },
-                }}
-            />
-            <div className="add-icon">
-                <Space>
-                    {!isSaveAllRecord && products.length !==0 && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
-                    {isSaveAllRecord && <Button type="primary" onClick={saveAllRecord}>Save all record</Button>}
-                    {isSaveAllRecord && <Button danger onClick={cancelEditMultiple}>Cancel edit multiple</Button>}
-                </Space>
-            </div>
+            
+            <Form form={form} validateMessages={validateMessages} onFinish={submitHandler}>
+                <Table
+                    pagination={false}
+                    dataSource={products}
+                    columns={customColumns}
+                    components={{
+                        body: {
+                            cell: EditableCell,
+                        },
+                    }}
+                />
+                <div style={{width: '100%'}}>
+                    <Button style={{width: '100%', color: 'rgba(0, 0, 0, 0.85)', backgroundColor: '#cccc', borderColor:'#cccc'}} type="primary" onClick={addRowProduct}><AppstoreAddOutlined/> Add new record</Button>
+                </div>
+                <br/>
+                <div>
+                    <Space>
+                        {!isSaveAllRecord && products.length !==0 && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
+                        {isSaveAllRecord && <Button type="primary" htmlType="submit">Save all record</Button>}
+                        {isSaveAllRecord && <Button danger onClick={cancelEditMultiple}>Cancel edit multiple</Button>}
+                    </Space>
+                </div>
+            </Form>
         </>
         
     )
