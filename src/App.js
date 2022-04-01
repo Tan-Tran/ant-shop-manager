@@ -3,7 +3,6 @@ import ShopHeader from './components/common/Header'
 import ShopSidebar from './components/common/Sidebar'
 import Customer from './components/detail/Customer'
 import Product from './components/detail/Product'
-import ProductUpdate from './components/detail/ProductUpdate'
 import Order from './components/detail/Order'
 
 import AddCustomer from './components/pages/AddCustomer'
@@ -11,6 +10,7 @@ import EditCustomer from './components/pages/EditCustomer'
 import AddProduct from './components/pages/AddProduct'
 import EditProduct from './components/pages/EditProduct'
 import AddOrder from './components/pages/AddOrder'
+import AddOrderTable from './components/pages/AddOrderTable'
 import Example from './components/edittable/Example'
 
 import 'antd/dist/antd.css'
@@ -50,7 +50,7 @@ function App() {
                       </Route>
 
                       <Route path="/product" exact>
-                        <ProductUpdate/>
+                        <Product/>
                       </Route>
 
                       <Route path="/order" exact>
@@ -75,7 +75,7 @@ function App() {
                       </Route>
 
                       <Route path="/add-order">
-                        <AddOrder/>
+                        <AddOrderTable/>
                       </Route>
 
                       <Route path="/order/:id">

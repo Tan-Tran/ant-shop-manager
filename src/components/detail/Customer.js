@@ -185,7 +185,6 @@ const Customer = () =>{
                                     onClick={() =>{ setEditRowId(record.key); setRowData(record)}}>
                                     <EditOutlined/>
                                 </Button>
-                    // editButton = <Button type="primary"  onClick={() =>{ setEditRowId(record.key); setRowData(record)}}><EditOutlined/></Button>
                 }
                 if(record.key === editRowId){
                     editButton = ''

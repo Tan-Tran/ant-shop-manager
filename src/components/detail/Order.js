@@ -139,46 +139,7 @@ const Order = () =>{
             setDataOrders(data)
         }
     },[customers, orders])
-
-    const expandedRowRender = (row) => { 
-        const orderId = row.key
-        const order = orders.find((order)=> order.key === orderId)
-        const loadedProducts = []
-        const data = order.products
-        for(const item of data){
-            const product = products.find((product)=> product.key === item.key)
-            loadedProducts.push({
-                key: item.key,
-                name: product.name,
-                price: product.price,
-                quantity: item.quantity,
-                desc: product.desc,
-                origin: product.origin,
-            })
-        }
-        const columns = [
-            { title: 'Product', dataIndex: 'name', key: 'name', editable: true,},
-            { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true,},
-            { title: "Price", dataIndex: 'price', key: 'price', editable: true,},
-            { title: 'Origin', dataIndex: 'origin', key: 'origin', editable: true,},
-            { title: 'Description', dataIndex: 'desc', key: 'desc', editable: true,},
-            {
-                title: 'Action',
-                dataIndex: '',
-                key: '',
-                render: (record) =>{
-                    return (
-                        <Space>
-                            <Button type="primary" shape="circle" ghost><PlusCircleOutlined/></Button>
-                            <Button danger shape="circle"><MinusCircleOutlined/></Button>
-                        </Space>
-                    )
-                }
-            }
-        ]
-        return <Table className="sub-table" columns={columns} dataSource={loadedProducts} pagination={false} />;
-    }
-    
+   
     const columns = [
         { title: 'Customer', dataIndex: 'customerName', key: 'customerName', editable: true,},
         { 
@@ -242,19 +203,10 @@ const Order = () =>{
         }
     })
 
-    const addNewRow = () =>{
-        const newOrder = {
-            customerName:'',
-            productName:'',
-        }
-        setOrders([...orders,{...newOrder}])
-    }
-
     return(
         <>
             <div className="add-icon">
-                {/* <Button type="primary" onClick = {() => history.push("/add-order")}><PlusCircleOutlined/></Button> */}
-                <Button type="primary" onClick = {addNewRow}><PlusCircleOutlined/></Button>
+                <Button type="primary" onClick = {() => history.push("/add-order")}><PlusCircleOutlined/></Button>
             </div>
             <Form form={form}>    
                 <Table
@@ -264,7 +216,6 @@ const Order = () =>{
                         },
                     }}
                     className="components-table-demo-nested"
-                    expandable={{ expandedRowRender }}
                     columns={customColumns}
                     dataSource={dataOrders} 
                 />

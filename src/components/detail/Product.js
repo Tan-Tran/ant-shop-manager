@@ -6,71 +6,22 @@ import { DeleteOutlined, EditOutlined, AppstoreAddOutlined, LoadingOutlined, Che
 
 import 'antd/dist/antd.css'
 
-const loadingIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />
-
-const validateMessages = {
-    required: '${label} is required!',
-    types: {
-        email: '${label} is not a valid email!',
-        number: '${label} is not a valid number!',
-    },
-    number: {
-        range: '${label} must be between ${min} and ${max}',
-    },
-};
-
-const EditableCell = ({editing, editable, dataIndex, title, inputType, record, index, children,...restProps}) => {
-        const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
-
-        let childNode = children;
-
-        if (editable) {
-            childNode = editing ? (
-            <Form.Item
-                style={{
-                    margin: 0,
-                }}
-                name={[record.key, dataIndex]}
-                rules={[
-                    {
-                        required: true,
-                        message: `${title} is required.`,
-                    },
-                ]}
-            >
-                {inputNode}
-            </Form.Item>
-            ) : (
-            <div
-                className="editable-cell-value-wrap"
-                style={{
-                    paddingRight: 24,
-                }}
-            >
-                {children}
-            </div>
-            );
-        }
-
-    return <td {...restProps}>{childNode}</td>;
-};
-
+import validateMessages from '../common/form/ValidateMessages';
+import EditableCell from '../common/table/EditTableCell'
+import InputType from '../common/table/InputType';
 
 const Product  = () =>{
 
     const [form] = Form.useForm()
 
-    const[products, setProducts] = useState([])
+    const [products, setProducts] = useState([])
 
-    const[isLoading, setIsLoading] = useState(false)
+    const [editingKeys, setEditingKeys] = useState([])
 
-    const[editingKeys, setEditingKeys] = useState([])
-
-    const[isSaveAllRecord, setIsSaveAllRecord] = useState(false)
+    const [isSaveAllRecord, setIsSaveAllRecord] = useState(false)
 
     const fetchProducts = async() =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
-        setIsLoading(true)
         try{
             const response = await fetch(url)
             if(!response.ok){
@@ -89,9 +40,7 @@ const Product  = () =>{
                 })
             }
             setProducts(loadedProducts)
-            setIsLoading(false)
         }catch(error){
-            setIsLoading(false)
             console.log("Add product failed")
         }
     }
@@ -198,7 +147,12 @@ const Product  = () =>{
     }
 
     const saveRecord = async (key) =>{
-        await form.validateFields()
+        try{
+            await form.validateFields()
+        }catch(error){
+            console.log("Empty input")
+            return
+        }
 
         const isNewRecord = products.find((product) => product.key === key).isNew
 
@@ -235,7 +189,6 @@ const Product  = () =>{
                     },
                     body: JSON.stringify(newData)
             })
-            //
             const newProducts = [...products]
             const indexProduct = newProducts.findIndex(product => product.key === key)
             newProducts[indexProduct] = {...newData, key: key}
@@ -266,11 +219,18 @@ const Product  = () =>{
     }
 
     const cancelEditMultiple = () =>{
+        const newProducts = products.filter((product) => !product.isNew)
+        setProducts(newProducts)
         setEditingKeys([])
         setIsSaveAllRecord(false)
     }
 
-    const submitHandler = () =>{
+    const submitHandler = async() =>{
+        try{
+            await form.validateFields()
+        }catch(error){
+            console.log("Empty input")
+        }
         const data = form.getFieldsValue()
         const updateProducts = []
         for(const key in data){
@@ -309,7 +269,7 @@ const Product  = () =>{
             ...column,
             onCell: (record) =>({
                 record,
-                inputType: (column.dataIndex === 'quantity' ||  column.dataIndex === 'price')? 'number':'text',
+                inputType: InputType(column.dataIndex),
                 title: column.title,
                 dataIndex: column.dataIndex,
                 editable: column.editable,
@@ -320,10 +280,6 @@ const Product  = () =>{
     
     return (
         <>
-            {isLoading && <div className="loading">
-                <Spin indicator={loadingIcon}/>
-            </div>}           
-            
             <Form form={form} validateMessages={validateMessages} onFinish={submitHandler}>
                 <Table
                     pagination={false}
@@ -336,7 +292,7 @@ const Product  = () =>{
                     }}
                 />
                 <div style={{width: '100%'}}>
-                    <Button style={{width: '100%', color: 'rgba(0, 0, 0, 0.85)', backgroundColor: '#cccc', borderColor:'#cccc'}} type="primary" onClick={addRowProduct}><AppstoreAddOutlined/> Add new record</Button>
+                    <Button style={{width: '100%', color: '#1890ff', backgroundColor: '#cccc', borderColor:'#cccc'}} type="primary" onClick={addRowProduct}><AppstoreAddOutlined/> Add new record</Button>
                 </div>
                 <br/>
                 <div>
