@@ -19,31 +19,41 @@ const validateMessages = {
     },
 };
 
-const EditableCell = ({editing, dataIndex, title, inputType, record, index, children,...restProps}) => {
+const EditableCell = ({editing, editable, dataIndex, title, inputType, record, index, children,...restProps}) => {
         const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
-        return (
-        <td {...restProps}>
-            {editing ? (
+
+        let childNode = children;
+
+        if (editable) {
+            childNode = editing ? (
             <Form.Item
-                name={[record.key, dataIndex]}
                 style={{
-                margin: 0,
-            }}
+                    margin: 0,
+                }}
+                name={[record.key, dataIndex]}
                 rules={[
                     {
                         required: true,
-                        message: `Please Input ${title}!`,
+                        message: `${title} is required.`,
                     },
                 ]}
             >
                 {inputNode}
             </Form.Item>
             ) : (
-            children
-            )}
-        </td>
-        );
-    };
+            <div
+                className="editable-cell-value-wrap"
+                style={{
+                    paddingRight: 24,
+                }}
+            >
+                {children}
+            </div>
+            );
+        }
+
+    return <td {...restProps}>{childNode}</td>;
+};
 
 
 const Product  = () =>{
@@ -55,6 +65,8 @@ const Product  = () =>{
     const[isLoading, setIsLoading] = useState(false)
 
     const[editingKeys, setEditingKeys] = useState([])
+
+    const[isSaveAllRecord, setIsSaveAllRecord] = useState(false)
 
     const fetchProducts = async() =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
@@ -121,7 +133,7 @@ const Product  = () =>{
                     !record.isNew? 
                     (editable?
                     (<Space>
-                        <Button type="primary" htmlType="submit"><CheckOutlined/></Button>
+                        <Button type="primary" onClick={() => saveRecord(record.key)}><CheckOutlined/></Button>
                         <Button danger onClick={() => cancelUpdateRecord(record.key)}><CloseOutlined/></Button>
                     </Space>):
                     (<Space>
@@ -129,7 +141,7 @@ const Product  = () =>{
                         <Button danger onClick={() => deleteRecord(record.key)}><DeleteOutlined/></Button>
                     </Space>)):(
                         <Space>
-                            {/* <Button type="primary" onClick={() => saveRecord(record.key)}><PlusCircleOutlined/></Button> */}
+                            <Button type="primary" onClick={() => saveRecord(record.key)}><PlusCircleOutlined/></Button>
                             <Button danger onClick={() => cancelAddNewRecord(record.key)}><CloseOutlined/></Button>
                         </Space>
                     )
@@ -185,10 +197,97 @@ const Product  = () =>{
         setProducts(newProducts)
     }
 
-    const submitData = (data) =>{
-        console.log("abc")
-        console.log(data)
+    const saveRecord = async (key) =>{
+        await form.validateFields()
+
+        const isNewRecord = products.find((product) => product.key === key).isNew
+
+        const newData = form.getFieldValue(key)
+
+        if(isNewRecord){
+            const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+            const addNewProduct = async() =>{
+                const response = await fetch(url,{
+                    method:'POST',
+                    body: JSON.stringify(newData),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                const data = await response.json()
+                const id = data.name
+                const newProducts = [...products]
+                const indexNewProduct = newProducts.findIndex(product => product.key === key)
+                newProducts[indexNewProduct] = {...newData, key: id}
+                setProducts(newProducts)
+                setEditingKeys(editingKeys.filter((item) => item !== key))
+                message.success('Add a new product successfully')
+            }
+            addNewProduct()
+            return
+        }
+        const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`
+        const updateDate = async () =>{
+            const response = await fetch(url,{
+                method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newData)
+            })
+            //
+            const newProducts = [...products]
+            const indexProduct = newProducts.findIndex(product => product.key === key)
+            newProducts[indexProduct] = {...newData, key: key}
+            setProducts(newProducts)
+            setEditingKeys(editingKeys.filter((item) => item !== key))
+            message.success(`Update successfully`)
+        }
+        updateDate()
     }
+
+    const editMultiple = () =>{
+        for(const product of products){
+            const key = product.key        
+            form.setFieldsValue({
+                [`${key}`]:{
+                    name: product.name,
+                    quantity: product.quantity,
+                    price: product.price,
+                    origin: product.origin,
+                    desc: product.desc,
+                }
+            });
+            setEditingKeys((previous) =>{
+                return[...previous, product.key]
+            })
+        }
+        setIsSaveAllRecord(true)
+    }
+
+    const cancelEditMultiple = () =>{
+        setEditingKeys([])
+        setIsSaveAllRecord(false)
+    }
+
+    const submitHandler = () =>{
+        console.log(form.getFieldsValue())
+        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
+        const updateAllRecord = async () =>{
+            const response = await fetch(url,{
+                method: 'PUT',
+                body: JSON.stringify(form.getFieldsValue()),
+                headers:{ 
+                    'Content-Type': 'application/json'
+                }
+            })
+        }
+        updateAllRecord()    
+        setEditingKeys([])
+        setIsSaveAllRecord(false)
+    }
+
+
 
     const customColumns = columns.map((column) =>{
         if(!column.editable){
@@ -215,7 +314,7 @@ const Product  = () =>{
             <div className="add-icon">
                 <Button type="primary" onClick={addRowProduct}><AppstoreAddOutlined/></Button>
             </div>
-            <Form form={form} validateMessages={validateMessages} onFinish={submitData}>
+            <Form form={form} validateMessages={validateMessages} onFinish={submitHandler}>
                 <Table
                     pagination={false}
                     dataSource={products}
@@ -226,6 +325,13 @@ const Product  = () =>{
                         },
                     }}
                 />
+                <div className="add-icon">
+                    <Space>
+                        {!isSaveAllRecord && products.length !==0 && <Button type="primary" onClick={editMultiple}>Edit multiple</Button>}
+                        {isSaveAllRecord && <Button type="primary" htmlType="submit">Save all record</Button>}
+                        {isSaveAllRecord && <Button danger onClick={cancelEditMultiple}>Cancel edit multiple</Button>}
+                    </Space>
+                </div>
             </Form>
         </>
         

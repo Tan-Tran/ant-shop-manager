@@ -204,7 +204,6 @@ const Product  = () =>{
         })
         setHasNewProduct(true)
         const newProducts = [...products, {...newRowData}]
-        // setUpdateProducts(newProducts)
         setProducts(newProducts)
     }
 

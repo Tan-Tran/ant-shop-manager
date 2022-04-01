@@ -320,7 +320,7 @@ const Customer = () =>{
             </div>}
             <div className="add-icon">
                 <Button type="primary" onClick={addNewRowHandler}>
-                   Add new row
+                    Add new row
                 </Button>
             </div>
             <Form form={form} onFinish={submitHandler}>
