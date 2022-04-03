@@ -12,3 +12,17 @@ export const productConvert = (data) => {
   }
   return productList;
 };
+
+export const customerConvert = (data) => {
+  const customerList = [];
+  for (const key in data) {
+    customerList.push({
+      key: key,
+      name: data[key].name,
+      address: data[key].address,
+      dateOfBirth: data[key].dateOfBirth,
+      phone: data[key].phone,
+    });
+  }
+  return customerList
+};
