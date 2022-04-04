@@ -39,9 +39,9 @@ body {
   font-size: 30px;
 }
 
-.ant-select-dropdown {
+/* .ant-select-dropdown {
   width: 600px !important;
-}
+} */
 .select_product_table .ant-select-dropdown{
   width: 200px !important;
 }

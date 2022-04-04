@@ -6,7 +6,7 @@ const SelectCustomer = ({ customers, selectCustomerHandler }) => {
   return (
     <Select
       showSearch
-      style={{ width: 225 }}
+      style={{ width: 300 }}
       placeholder="Search customer"
       optionLabelProp="label"
       optionFilterProp="children"

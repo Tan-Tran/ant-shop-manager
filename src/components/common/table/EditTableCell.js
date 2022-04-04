@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { Form, Input, InputNumber, Select } from 'antd';
+import { Form, Input, InputNumber, Select, DatePicker } from 'antd';
+
+import formatDate from '../../format/formatDate';
 
 const { Option } = Select;
 
@@ -16,6 +18,7 @@ const EditableCell = ({
   children,
   dataSelect,
   getData,
+  isDuplicate,
   ...restProps
 }) => {
   let inputNode = '';
@@ -53,6 +56,10 @@ const EditableCell = ({
         </Select>
       );
       break;
+    case 'date':
+      inputNode = (
+        <DatePicker format={formatDate}/>
+      )
     default:
       inputNode = (
         <Input onChange={(event) => getData({ dataIndex, event, key })} />
@@ -66,13 +73,21 @@ const EditableCell = ({
       <Form.Item
         style={{
           margin: 0,
+          width: 150,
         }}
         name={[record.key, dataIndex]}
         rules={[
           {
             required: true,
             message: `${title} is required.`,
+
           },
+          ({getFieldValue}) => ({validator(){
+            if(isDuplicate(getFieldValue([record.key, dataIndex]))){
+              return Promise.reject(new Error("Duplicate item"))
+            }
+            return Promise.resolve()
+          }})
         ]}
       >
         {inputNode}

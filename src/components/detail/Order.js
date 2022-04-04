@@ -6,38 +6,20 @@ import { DeleteOutlined, EditOutlined, PlusCircleOutlined, MinusCircleOutlined }
 
 import 'antd/dist/antd.css'
 
+import moment from 'moment';
+
 import {useHistory} from 'react-router-dom'
 
-const {Option} = Select
+import EditableCell from '../common/table/EditTableCell';
 
-const EditableCell = ({editable, editing, dataIndex, title, inputType, record, index, children, products,...restProps}) =>{
-    let inputNode = ''
-    if(inputType === 'select'){
-        inputNode = <Select style={{ width: 200 }} placeholder="select product">
-                        {products.map((product) =>{
-                            return (
-                                <Option key={product.key} value={product.key}>{product.name}</Option>
-                            )
-                        })}
-                    </Select>
-    }
-    if(inputType === 'text'){
-        inputNode = <Input/>
-    }
-    const content = editable && editing?
-        <Form.Item
-            name = {dataIndex}
-            style = {{width: 200 }}
-        >
-            {inputNode}
-        </Form.Item>
-        :children
-    return(
-        <td {...restProps}>
-            {content}
-        </td>
-    )
-}
+import { productConvert, customerConvert, orderConvert } from '../Adapters/DataConvert';
+import InputType from '../common/table/InputType'
+
+import {
+    getData,
+  } from '../Adapters/FetchData';
+
+const {Option} = Select
 
 const Order = () =>{
 
@@ -49,65 +31,25 @@ const Order = () =>{
 
     const[orders, setOrders] = useState([])
 
-    const[dataOrders, setDataOrders] = useState([])
+    const[ordersData, setOrdersData] = useState([])
 
     const [form] = Form.useForm()
 
-    const fetchProducts = async() =>{
-        const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json"
-        try{
-            const response = await fetch(url)
-            if(!response.ok){
-                throw new Error("Some thing went wrong!")
-            }
-            const data = await response.json()
-            const loadedProducts = []
-            for(const key in data){
-                loadedProducts.push({
-                    key: key,
-                    name: data[key].name,
-                    price: data[key].price,
-                    quantity: data[key].quantity,
-                    desc: data[key].desc,
-                    origin: data[key].origin,
-                })
-            }
-            setProducts(loadedProducts)
-        }catch(error){
-            console.log("Add product failed")
-        }
-    }
-
-    const fetchCustomers = async () =>{
-        const response = await fetch("https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json")
-        const data = await response.json()
-        const loadedCustomers = [];
-        for(const key in data){
-            loadedCustomers.push({
-                key: key,
-                name: data[key].name,
-                age: data[key].age,
-                address: data[key].address,
-                dateOfBirth: data[key].dateOfBirth,
-                phone: data[key].phone
-            })
-        }
-        setCustomers(loadedCustomers)
-    }
+    const fetchProducts = async () => {
+        const url =
+          'https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json';
+        setProducts(await getData(url, productConvert));
+      };
+    
+      const fetchCustomers = async () => {
+        const url =
+          'https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json';
+        setCustomers(await getData(url, customerConvert));
+      };
 
     const fetchOrders = async () =>{
         const url = "https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json"
-        const response =  await fetch(url)
-        const data = await response.json()
-        const loadedOrders = []
-        for(const key in data){
-            loadedOrders.push({
-                key: key,
-                customerId: data[key].customerId,
-                products: data[key].products
-            })
-        }
-        setOrders(loadedOrders)       
+        setOrders(await getData(url, orderConvert))       
     }
 
     useEffect(()=>{
@@ -125,28 +67,27 @@ const Order = () =>{
                 const orderData = {
                     key: orderId,
                     customerName: customer?.name,
-                    productName: [],
-                    quantity: 0,
+                    productNames: [],
+                    dateOrder: new Date(order.dateOrder).toLocaleDateString('en-US'),
                     total: 0,
                 }
                 for(const product of order.products){                    
-                    orderData.productName.push(product.product)
-                    orderData.quantity = orderData.quantity + product.quantity
+                    orderData.productNames.push(product.name)
                     orderData.total = orderData.total + product.total
                 }
                 data.push(orderData)
+                console.log(orderData)
             }
-            setDataOrders(data)
+            setOrdersData(data)
         }
     },[customers, orders])
    
     const columns = [
-        { title: 'Customer', dataIndex: 'customerName', key: 'customerName', editable: true,},
+        { title: 'Customer', dataIndex: 'customerName', key: 'customerName', editable: false,},
         { 
             title: 'Product', 
-            dataIndex: 'productName', 
-            key: 'productName',
-            editable: true,
+            dataIndex: 'productNames', 
+            key: 'productNames',
             render: (productNames) =>(
                 <>
                     {productNames.map((productName) =>{
@@ -159,21 +100,21 @@ const Order = () =>{
                 </>
             )
         },
-        { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true,},
+        { title: 'Date', dataIndex: 'dateOrder', key: 'dateOrder', editable: false,},
         { title: 'Total', dataIndex: 'total', key: 'total', editable: false,},
-        {
+        { 
             title: 'Action',
             dataIndex: '',
             key: '',
-            render: (record) =>{
-                return (
-                    <Space>
-                        <Button type="primary" onClick={() => editRecord(record)}><EditOutlined/></Button>
-                        <Button danger><DeleteOutlined/></Button>
-                    </Space>
+            render: (_, record) => {
+                return(
+                    <Button danger>
+                        <DeleteOutlined />
+                    </Button>
                 )
             }
-        }        
+        }
+        
     ]
 
     const[editingKey, setEditingKey] = useState(null)
@@ -194,11 +135,9 @@ const Order = () =>{
             ...column,
             onCell: (record) =>({
                 record,
-                inputType: column.dataIndex === 'productName' ? 'select' : 'text',
+                inputType: InputType(column.dataIndex),
                 dataIndex: column.dataIndex,
-                title: column.title,
-                editing: isEditing(record),
-                products,
+                title: column.title
             })
         }
     })
@@ -217,7 +156,7 @@ const Order = () =>{
                     }}
                     className="components-table-demo-nested"
                     columns={customColumns}
-                    dataSource={dataOrders} 
+                    dataSource={ordersData} 
                 />
             </Form>
         </>

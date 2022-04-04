@@ -128,16 +128,17 @@ const Product = () => {
   };
 
   const columns = [
-    { title: 'Name', dataIndex: 'name', key: 'name', editable: true },
+    { title: 'Name', dataIndex: 'name', key: 'name', editable: true, width: '250px' },
     {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
       editable: true,
+      width: '250px'
     },
-    { title: 'Price', dataIndex: 'price', key: 'price', editable: true },
-    { title: 'Origin', dataIndex: 'origin', key: 'origin', editable: true },
-    { title: 'Description', dataIndex: 'desc', key: 'desc', editable: true },
+    { title: 'Price', dataIndex: 'price', key: 'price', editable: true, width: '250px' },
+    { title: 'Origin', dataIndex: 'origin', key: 'origin', editable: true, width: '250px'},
+    { title: 'Description', dataIndex: 'desc', key: 'desc', editable: true, width: '250px' },
     {
       title: 'Action',
       dataIndex: '',

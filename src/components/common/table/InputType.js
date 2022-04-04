@@ -1,6 +1,7 @@
 const inputType = {
     product: 'select',
     quantity: 'number',
+    dateOrder: 'date',
     price: 'number',
     age: 'number',
     birth: 'date'

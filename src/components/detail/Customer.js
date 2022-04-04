@@ -99,6 +99,7 @@ const Customer = () => {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      width: '300px',
       render: (text, record) => {
         if (record.key === editRowId) {
           return (
@@ -115,6 +116,7 @@ const Customer = () => {
       title: 'Age',
       dataIndex: 'age',
       key: 'age',
+      width: '300px',
       render: (text, record) => {
         if (record.key === editRowId) {
           return (
@@ -134,6 +136,7 @@ const Customer = () => {
       title: 'Address',
       dataIndex: 'address',
       key: 'address',
+      width: '300px',
       render: (text, record) => {
         if (record.key === editRowId) {
           return (
@@ -150,6 +153,7 @@ const Customer = () => {
       title: 'Date of birth',
       dataIndex: 'dateOfBirth',
       key: 'dateOfBirth',
+      width: '300px',
       render: (text, record) => {
         if (record.key === editRowId) {
           return (
@@ -171,6 +175,7 @@ const Customer = () => {
       title: 'Phone',
       dataIndex: 'phone',
       key: 'phone',
+      width: '300px',
       render: (text, record) => {
         if (record.key === editRowId) {
           return (

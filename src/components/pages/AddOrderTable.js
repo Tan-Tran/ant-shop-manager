@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+import {useHistory} from 'react-router-dom'
+
 import {
   Form,
-  Select,
-  InputNumber,
-  Input,
   Button,
   Row,
   Col,
@@ -12,10 +11,11 @@ import {
   Card,
   Space,
   message,
+  Divider,
+  Input
 } from 'antd';
 
 import {
-  PlusCircleOutlined,
   AppstoreAddOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
@@ -26,16 +26,11 @@ import { productConvert, customerConvert } from '../Adapters/DataConvert';
 
 import {
   getData,
-  addData,
-  updateData,
-  deleteData,
 } from '../Adapters/FetchData';
 
 import EditableCell from '../common/table/EditTableCell';
 import InputType from '../common/table/InputType';
 import SelectCustomer from '../common/form/SelectCustomer';
-
-const { Option } = Select;
 
 const AddOrderTable = () => {
   const [form] = Form.useForm();
@@ -49,6 +44,8 @@ const AddOrderTable = () => {
   const [total, setTotal] = useState(0);
 
   const [tempItems, setTempItems] = useState([]);
+
+  const history = useHistory()
 
   const fetchProducts = async () => {
     const url =
@@ -67,38 +64,27 @@ const AddOrderTable = () => {
     fetchCustomers();
   }, []);
 
-  const addCurrentProduct = async (key) => {
-    try {
-      await form.validateFields();
-      let itemIndex = tempItems.findIndex((item) => item.key === key);
-      const copyTempItems = [...tempItems];
-      copyTempItems[itemIndex].isNew = false;
-      console.log(copyTempItems);
-      let total = 0;
-      for (const item of copyTempItems) {
-        if (!item.isNew) {
-          total = total + item.total;
-        }
-      }
-      setTotal(total);
-      setTempItems(copyTempItems);
-    } catch (error) {
-      console.log('empty input');
-    }
-  };
+  const checkDuplicate = (value) =>{
+    return tempItems.filter((item) => item.productId === value).length > 1
+  }
 
-  const decreaseCurrentProduct = (key) => {
+  const removeCurrentProduct = (key) => {
     let newItems = [...tempItems].filter((item) => item.key !== key);
     let total = 0;
     for (const item of newItems) {
       total = total + item.total;
     }
+    form.validateFields()
     setTotal(total);
     setTempItems(newItems);
   };
 
   const selectCustomerHandler = (values) => {
-    setCustomer(customers.find((item) => item.key === values));
+    const currentCustomer = customers.find((item) => item.key === values)
+    setCustomer(currentCustomer);
+    form.setFieldsValue({
+      customer: currentCustomer.key
+    })
   };
 
   const addNewItems = () => {
@@ -112,6 +98,7 @@ const AddOrderTable = () => {
     const newItem = {
       key: key,
       product: '',
+      productId: '',
       quantity: 1,
       price: 0,
       total: 0,
@@ -122,16 +109,17 @@ const AddOrderTable = () => {
   };
 
   const columns = [
-    { title: 'Product', dataIndex: 'product', key: 'product', editable: true },
+    { title: 'Product', dataIndex: 'product', key: 'product', editable: true, width: '300px' },
     {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
       editable: true,
+      width: '200px'
     },
-    { title: 'Price', dataIndex: 'price', key: 'price', editable: false },
-    { title: 'Total', dataIndex: 'total', key: 'total', editable: false },
-    { title: 'Notes', dataIndex: 'desc', key: 'desc', editable: true },
+    { title: 'Price', dataIndex: 'price', key: 'price', editable: false, width: '200px' },
+    { title: 'Total', dataIndex: 'total', key: 'total', editable: false, width: '200px' },
+    { title: 'Notes', dataIndex: 'desc', key: 'desc', editable: true,  width: '400px' },
     {
       title: 'Action',
       dataIndex: '',
@@ -139,15 +127,7 @@ const AddOrderTable = () => {
       render: (record) => {
         return (
           <Space>
-            {record.isNew && (
-              <Button
-                type="primary"
-                onClick={() => addCurrentProduct(record.key)}
-              >
-                <PlusCircleOutlined />
-              </Button>
-            )}
-            <Button danger onClick={() => decreaseCurrentProduct(record.key)}>
+            <Button danger onClick={() => removeCurrentProduct(record.key)}>
               <DeleteOutlined />
             </Button>
           </Space>
@@ -164,14 +144,22 @@ const AddOrderTable = () => {
     const product = products.find((item) => item.key === dataUpdate.product);
     const newTempItems = {
       ...copyItems[indexItemNeedUpdate],
+      product: product.name,
+      productId: dataUpdate.product,
       price: product.price,
       quantity: dataUpdate.quantity,
       total: product.price * dataUpdate.quantity,
+      desc: dataUpdate.desc
     };
     copyItems[indexItemNeedUpdate] = newTempItems;
+    let total = 0;
+    for (const item of copyItems) {
+      total = total + item.total;
+    }
+    setTotal(total)
     setTempItems(copyItems);
   };
-
+  
   const columnsItems = columns.map((column) => {
     if (!column.editable) {
       return column;
@@ -185,6 +173,7 @@ const AddOrderTable = () => {
         dataIndex: column.dataIndex,
         editable: column.editable,
         editing: record.isNew,
+        isDuplicate: checkDuplicate, 
         getData: getDataHandler,
         dataSelect:
           column.dataIndex === 'product' ? { product: products } : null,
@@ -192,33 +181,27 @@ const AddOrderTable = () => {
     };
   });
 
-  const editAllItems = () => {
-    const copyTempItems = [...tempItems];
-    for (const item of copyTempItems) {
-      item.isNew = true;
-    }
-    setTempItems(copyTempItems);
-    setTotal(0);
-  };
-
   const checkoutOrder = async () => {
     const url =
-      'https://shop-management-aba6f-default-rtdb.firebaseio.com/test-orders.json';
+      'https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json';
     try {
       await form.validateFields();
       const listProducts = tempItems.map((item) => {
         return {
-          key: item.product,
-          date: new Date(),
+          key: item.productId,
           price: item.price,
           desc: item.desc,
           total: item.total,
+          quantity: item.quantity,
+          name: item.product
         };
       });
       const orderData = {
         customerId: customer.key,
         products: listProducts,
+        dateOrder: new Date(),
       };
+      console.log(orderData);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -227,96 +210,28 @@ const AddOrderTable = () => {
         body: JSON.stringify(orderData),
       });
       message.success('Add order completed');
+      history.push("/order")
     } catch (error) {
       console.log('Checkout error');
     }
   };
 
   return (
-    <>
+    <div style={{padding: 16}}>
       <Form form={form} validateMessages={validateMessages} component={false}>
-        <Row>
-          <Col span={18}>
             <Row>
-              <Form.Item
-                name="customerId"
-                label="Customer"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  showSearch
-                  style={{ width: 225 }}
-                  placeholder="Search customer"
-                  optionLabelProp="label"
-                  optionFilterProp="children"
-                  onChange={selectCustomerHandler}
-                  filterOption={(input, option) =>
-                    option.children.props.children[0].props.children[1]
-                      .toLowerCase()
-                      .indexOf(input.toLowerCase()) >= 0
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children.props.children[0].props.children[1]
-                      .toLowerCase()
-                      .localeCompare(
-                        optionB.children.props.children[0].props.children[1].toLowerCase()
-                      )
-                  }
-                >
-                  {customers.map((customer) => {
-                    return (
-                      <Option
-                        value={customer.key}
-                        key={customer.key}
-                        label={customer.name}
-                      >
-                        <div>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              marginLeft: 10,
-                              width: 100,
-                            }}
-                          >
-                            Name: {customer.name}
-                          </span>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              marginLeft: 10,
-                              width: 150,
-                            }}
-                          >
-                            Phone: {customer.phone}
-                          </span>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              marginLeft: 10,
-                              width: 150,
-                            }}
-                          >
-                            Birth: {customer.dateOfBirth}
-                          </span>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              marginLeft: 10,
-                              width: 100,
-                            }}
-                          >
-                            Address: {customer.address}
-                          </span>
-                        </div>
-                      </Option>
-                    );
-                  })}
-                </Select>
-              </Form.Item>
-            </Row>
-            <Row gutter={16}>
               <Col>
-                <Card title="Customer" bordered={false} style={{ width: 300 }}>
+                <Form.Item
+                  name="customer"
+                  rules={[{ required: true }]}
+                >
+                  <SelectCustomer selectCustomerHandler={selectCustomerHandler} customers={customers}/>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Card title="Customer Info" bordered={false} style={{ width: 300 }}>
                   <p>Name: {customer.name}</p>
                   <p>ID: {customer.key}</p>
                   <p>Phone: {customer.phone}</p>
@@ -325,16 +240,24 @@ const AddOrderTable = () => {
                 </Card>
               </Col>
             </Row>
-          </Col>
-        </Row>
         <br />
         <Row>
-          <h4>Items: {tempItems.length}</h4>
+          <Form.Item
+            style={{width: '300px'}}
+            name = "delivery"
+            label = "Delivery to"
+            placeholder = "Please enter deli"
+          >
+            <Input/>
+          </Form.Item>
         </Row>
         <Row>
-          <h4>Total: {total}</h4>
+          <h4>Items: {tempItems.length}</h4>
+          <Divider type="vertical"/>
+          <h4 >Total: {total}</h4>
         </Row>
         <Table
+          className="table-add-order"
           dataSource={tempItems}
           pagination={false}
           columns={columnsItems}
@@ -360,18 +283,13 @@ const AddOrderTable = () => {
         </div>
         <div className="add-icon">
           {tempItems.length > 0 && (
-            <Space>
-              <Button type="primary" onClick={editAllItems}>
-                Edit
-              </Button>
-              <Button type="primary" onClick={checkoutOrder}>
-                Checkout
-              </Button>
-            </Space>
+            <Button type="primary" onClick={checkoutOrder}>
+              Checkout
+            </Button>
           )}
         </div>
       </Form>
-    </>
+    </div>
   );
 };
 

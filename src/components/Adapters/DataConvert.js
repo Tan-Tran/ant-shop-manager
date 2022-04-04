@@ -26,3 +26,16 @@ export const customerConvert = (data) => {
   }
   return customerList
 };
+
+export const orderConvert = (data) => {
+  const orderList = [];
+  for(const key in data){
+    orderList.push({
+      key: key,
+      dateOrder: data[key].dateOrder,
+      customerId: data[key].customerId,
+      products: data[key].products,
+    })
+  }
+  return orderList
+}
