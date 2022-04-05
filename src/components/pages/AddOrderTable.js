@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import {useHistory} from 'react-router-dom'
+import { useHistory } from 'react-router-dom';
 
 import {
   Form,
@@ -12,21 +12,16 @@ import {
   Space,
   message,
   Divider,
-  Input
+  Input,
 } from 'antd';
 
-import {
-  AppstoreAddOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons';
+import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import validateMessages from '../common/form/ValidateMessages';
 
 import { productConvert, customerConvert } from '../Adapters/DataConvert';
 
-import {
-  getData,
-} from '../Adapters/FetchData';
+import { getData } from '../Adapters/FetchData';
 
 import EditableCell from '../common/table/EditTableCell';
 import InputType from '../common/table/InputType';
@@ -45,7 +40,7 @@ const AddOrderTable = () => {
 
   const [tempItems, setTempItems] = useState([]);
 
-  const history = useHistory()
+  const history = useHistory();
 
   const fetchProducts = async () => {
     const url =
@@ -64,9 +59,9 @@ const AddOrderTable = () => {
     fetchCustomers();
   }, []);
 
-  const checkDuplicate = (value) =>{
-    return tempItems.filter((item) => item.productId === value).length > 1
-  }
+  const checkDuplicate = (value) => {
+    return tempItems.filter((item) => item.productId === value).length > 1;
+  };
 
   const removeCurrentProduct = (key) => {
     let newItems = [...tempItems].filter((item) => item.key !== key);
@@ -74,17 +69,17 @@ const AddOrderTable = () => {
     for (const item of newItems) {
       total = total + item.total;
     }
-    form.validateFields()
+    form.validateFields();
     setTotal(total);
     setTempItems(newItems);
   };
 
   const selectCustomerHandler = (values) => {
-    const currentCustomer = customers.find((item) => item.key === values)
+    const currentCustomer = customers.find((item) => item.key === values);
     setCustomer(currentCustomer);
     form.setFieldsValue({
-      customer: currentCustomer.key
-    })
+      customer: currentCustomer.key,
+    });
   };
 
   const addNewItems = () => {
@@ -109,17 +104,41 @@ const AddOrderTable = () => {
   };
 
   const columns = [
-    { title: 'Product', dataIndex: 'product', key: 'product', editable: true, width: '300px' },
+    {
+      title: 'Product',
+      dataIndex: 'product',
+      key: 'product',
+      editable: true,
+      width: '300px',
+    },
     {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
       editable: true,
-      width: '200px'
+      width: '200px',
     },
-    { title: 'Price', dataIndex: 'price', key: 'price', editable: false, width: '200px' },
-    { title: 'Total', dataIndex: 'total', key: 'total', editable: false, width: '200px' },
-    { title: 'Notes', dataIndex: 'desc', key: 'desc', editable: true,  width: '400px' },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+      editable: false,
+      width: '200px',
+    },
+    {
+      title: 'Total',
+      dataIndex: 'total',
+      key: 'total',
+      editable: false,
+      width: '200px',
+    },
+    {
+      title: 'Notes',
+      dataIndex: 'desc',
+      key: 'desc',
+      editable: true,
+      width: '400px',
+    },
     {
       title: 'Action',
       dataIndex: '',
@@ -149,17 +168,17 @@ const AddOrderTable = () => {
       price: product.price,
       quantity: dataUpdate.quantity,
       total: product.price * dataUpdate.quantity,
-      desc: dataUpdate.desc
+      desc: dataUpdate.desc,
     };
     copyItems[indexItemNeedUpdate] = newTempItems;
     let total = 0;
     for (const item of copyItems) {
       total = total + item.total;
     }
-    setTotal(total)
+    setTotal(total);
     setTempItems(copyItems);
   };
-  
+
   const columnsItems = columns.map((column) => {
     if (!column.editable) {
       return column;
@@ -173,7 +192,7 @@ const AddOrderTable = () => {
         dataIndex: column.dataIndex,
         editable: column.editable,
         editing: record.isNew,
-        isDuplicate: checkDuplicate, 
+        isDuplicate: checkDuplicate,
         getData: getDataHandler,
         dataSelect:
           column.dataIndex === 'product' ? { product: products } : null,
@@ -193,7 +212,7 @@ const AddOrderTable = () => {
           desc: item.desc,
           total: item.total,
           quantity: item.quantity,
-          name: item.product
+          name: item.product,
         };
       });
       const orderData = {
@@ -210,51 +229,51 @@ const AddOrderTable = () => {
         body: JSON.stringify(orderData),
       });
       message.success('Add order completed');
-      history.push("/order")
+      history.push('/order');
     } catch (error) {
       console.log('Checkout error');
     }
   };
 
   return (
-    <div style={{padding: 16}}>
+    <div style={{ padding: 16 }}>
       <Form form={form} validateMessages={validateMessages} component={false}>
-            <Row>
-              <Col>
-                <Form.Item
-                  name="customer"
-                  rules={[{ required: true }]}
-                >
-                  <SelectCustomer selectCustomerHandler={selectCustomerHandler} customers={customers}/>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Card title="Customer Info" bordered={false} style={{ width: 300 }}>
-                  <p>Name: {customer.name}</p>
-                  <p>ID: {customer.key}</p>
-                  <p>Phone: {customer.phone}</p>
-                  <p>Birth: {customer.dateOfBirth}</p>
-                  <p>Address: {customer.address}</p>
-                </Card>
-              </Col>
-            </Row>
+        <Row>
+          <Col>
+            <Form.Item name="customer" rules={[{ required: true }]}>
+              <SelectCustomer
+                selectCustomerHandler={selectCustomerHandler}
+                customers={customers}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Card title="Customer Info" bordered={false} style={{ width: 300 }}>
+              <p>Name: {customer.name}</p>
+              <p>ID: {customer.key}</p>
+              <p>Phone: {customer.phone}</p>
+              <p>Birth: {customer.dateOfBirth}</p>
+              <p>Address: {customer.address}</p>
+            </Card>
+          </Col>
+        </Row>
         <br />
         <Row>
           <Form.Item
-            style={{width: '300px'}}
-            name = "delivery"
-            label = "Delivery to"
-            placeholder = "Please enter deli"
+            style={{ width: '300px' }}
+            name="delivery"
+            label="Delivery to"
+            placeholder="Please enter deli"
           >
-            <Input/>
+            <Input />
           </Form.Item>
         </Row>
         <Row>
           <h4>Items: {tempItems.length}</h4>
-          <Divider type="vertical"/>
-          <h4 >Total: {total}</h4>
+          <Divider type="vertical" />
+          <h4>Total: {total}</h4>
         </Row>
         <Table
           className="table-add-order"
