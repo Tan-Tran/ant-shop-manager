@@ -19,6 +19,7 @@ import {
   CheckOutlined,
   CloseOutlined,
   PlusOutlined,
+  PlusCircleOutlined
 } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -379,14 +380,23 @@ const Customer = () => {
           <Spin indicator={loadingIcon}></Spin>
         </div>
       )}
-      <div className="add-icon">
-        <Button type="primary" onClick={addNewRowHandler}>
-          Add new row
-        </Button>
-      </div>
       <Form form={form} onFinish={submitHandler}>
-        <Table dataSource={customers} bordered columns={columns} />
+        <Table dataSource={customers} bordered columns={columns} pagination={false}/>
       </Form>
+      <div style={{ width: '100%' }}>
+          <Button
+            style={{
+              width: '100%',
+              color: '#1890ff',
+              backgroundColor: '#cccc',
+              borderColor: '#cccc',
+            }}
+            type="primary"
+            onClick={addNewRowHandler}
+          >
+             <PlusCircleOutlined /> Add new customer
+          </Button>
+        </div>
     </>
   );
 };

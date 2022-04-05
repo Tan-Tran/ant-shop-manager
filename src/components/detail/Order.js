@@ -4,9 +4,7 @@ import { Table, Button, Space, Tag, Form, Input, Select } from 'antd';
 
 import {
   DeleteOutlined,
-  EditOutlined,
   PlusCircleOutlined,
-  MinusCircleOutlined,
 } from '@ant-design/icons';
 
 import 'antd/dist/antd.css';
@@ -17,18 +15,17 @@ import { useHistory } from 'react-router-dom';
 
 import EditableCell from '../common/table/EditTableCell';
 
-import expandedRowRender from '../common/table/DetailOrder';
 
 import {
   productConvert,
   customerConvert,
-  orderConvert,
-} from '../Adapters/DataConvert';
+  orderListConvert,
+} from '../adapters/DataConvert';
+
 import InputType from '../common/table/InputType';
 
-import { getData } from '../Adapters/FetchData';
+import { getData, deleteData } from '../adapters/FetchData';
 
-const { Option } = Select;
 
 const Order = () => {
   const history = useHistory();
@@ -40,8 +37,6 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
 
   const [ordersData, setOrdersData] = useState([]);
-
-  const [detailOrderKey, setDetailOrderKey] = useState(null);
 
   const [form] = Form.useForm();
 
@@ -60,7 +55,7 @@ const Order = () => {
   const fetchOrders = async () => {
     const url =
       'https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json';
-    setOrders(await getData(url, orderConvert));
+    setOrders(await getData(url, orderListConvert));
   };
 
   useEffect(() => {
@@ -80,6 +75,7 @@ const Order = () => {
         const orderData = {
           key: orderId,
           customerName: customer?.name,
+          delivery: order.delivery,
           productNames: [],
           dateOrder: new Date(order.dateOrder).toLocaleDateString('en-US'),
           total: 0,
@@ -89,11 +85,17 @@ const Order = () => {
           orderData.total = orderData.total + product.total;
         }
         data.push(orderData);
-        console.log(orderData);
       }
       setOrdersData(data);
     }
   }, [customers, orders]);
+
+
+  const deleteOrder = async (key) =>{
+    const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${key}.json`
+    await deleteData(url)
+    setOrders(orders.filter((item) => item.key !== key))
+  }
 
   const columns = [
     {
@@ -101,11 +103,13 @@ const Order = () => {
       dataIndex: 'customerName',
       key: 'customerName',
       editable: false,
+      width: '200px',
     },
     {
       title: 'Product',
       dataIndex: 'productNames',
       key: 'productNames',
+      width: '600px',
       render: (productNames) => (
         <>
           {productNames.map((productName) => {
@@ -119,12 +123,20 @@ const Order = () => {
       ),
     },
     {
+        title: 'Delivery address',
+        dataIndex: 'delivery',
+        key: 'delivery',
+        editable: false,
+        width: '200px',
+    },
+    {
       title: 'Date',
       dataIndex: 'dateOrder',
       key: 'dateOrder',
       editable: false,
+      width: '200px',
     },
-    { title: 'Total', dataIndex: 'total', key: 'total', editable: false },
+    { title: 'Total', dataIndex: 'total', key: 'total', editable: false,  width: '200px', },
     {
       title: 'Action',
       dataIndex: '',
@@ -132,22 +144,12 @@ const Order = () => {
       render: (_, record) => {
         return (
           <Button danger>
-            <DeleteOutlined />
+            <DeleteOutlined onClick={() => deleteOrder(record.key)}/>
           </Button>
         );
       },
     },
   ];
-
-  const [editingKey, setEditingKey] = useState(null);
-
-  const editRecord = (record) => {
-    setEditingKey(record.key);
-  };
-
-  const isEditing = (record) => {
-    return editingKey === record.key ? true : false;
-  };
 
   const customColumns = columns.map((column) => {
     if (!column.editable) {
@@ -166,19 +168,9 @@ const Order = () => {
 
   return (
     <>
-      <div className="add-icon">
-        <Button type="primary" onClick={() => history.push('/add-order')}>
-          <PlusCircleOutlined />
-        </Button>
-      </div>
       <Form form={form}>
         <Table
-          expendable={{
-            expandedRowRender,
-            rowExpandable: (record) => {
-              return record.key === detailOrderKey;
-            },
-          }}
+          pagination={false}
           components={{
             body: {
               cell: EditableCell,
@@ -187,7 +179,7 @@ const Order = () => {
           onRow={(record) => {
             return {
               onDoubleClick: () => {
-                setDetailOrderKey(record.key);
+                history.push(`/order/${record.key}`)
               },
             };
           }}
@@ -196,6 +188,11 @@ const Order = () => {
           dataSource={ordersData}
         />
       </Form>
+      <div>
+        <Button type="primary" onClick={() => history.push('/order/new')}>
+          <PlusCircleOutlined /> Add new order
+        </Button>
+      </div>
     </>
   );
 };

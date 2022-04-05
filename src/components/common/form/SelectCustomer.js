@@ -2,7 +2,7 @@ import { Select } from 'antd';
 
 const { Option } = Select;
 
-const SelectCustomer = ({ customers, selectCustomerHandler }) => {
+const SelectCustomer = ({ customers, selectCustomerHandler, customer }) => {
   return (
     <Select
       showSearch
@@ -11,6 +11,7 @@ const SelectCustomer = ({ customers, selectCustomerHandler }) => {
       optionLabelProp="label"
       optionFilterProp="children"
       onChange={selectCustomerHandler}
+      value={customer?.key}
       filterOption={(input, option) =>
         option.children.props.children[0].props.children[1]
           .toLowerCase()

@@ -29,7 +29,6 @@ const {Header, Content} = Layout
 function App() {
 
   return (
-      // <Example/>
     <Router>
         <div className="App">          
             <React.Fragment>              
@@ -74,12 +73,12 @@ function App() {
                         <EditProduct/>
                       </Route>
 
-                      <Route path="/add-order">
+                      <Route path="/order/new">
                         <AddOrderTable/>
                       </Route>
 
                       <Route path="/order/:id">
-                        <AddOrder/>
+                        <AddOrderTable/>
                       </Route>
 
                       </Switch>

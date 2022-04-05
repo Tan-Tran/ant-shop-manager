@@ -2,7 +2,10 @@
 export const getData = async (url, covertDataFunction) =>{
     const response = await fetch(url)
     const data = await response.json()
-    return covertDataFunction(data)
+    if(covertDataFunction){
+        return covertDataFunction(data)
+    }
+    return data
 }
 
 export const addData = async (url, dataBody) =>{

@@ -82,8 +82,9 @@ const EditableCell = ({
             message: `${title} is required.`,
 
           },
+          
           ({getFieldValue}) => ({validator(){
-            if(isDuplicate(getFieldValue([record.key, dataIndex]))){
+            if(inputType === "select" && isDuplicate(getFieldValue([record.key, dataIndex]))){
               return Promise.reject(new Error("Duplicate item"))
             }
             return Promise.resolve()

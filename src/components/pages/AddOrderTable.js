@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 
 import {
   Form,
@@ -19,16 +19,23 @@ import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import validateMessages from '../common/form/ValidateMessages';
 
-import { productConvert, customerConvert } from '../Adapters/DataConvert';
+import {
+  productConvert,
+  customerConvert,
+} from '../adapters/DataConvert';
 
-import { getData } from '../Adapters/FetchData';
+
+import { getData } from '../adapters/FetchData';
 
 import EditableCell from '../common/table/EditTableCell';
 import InputType from '../common/table/InputType';
 import SelectCustomer from '../common/form/SelectCustomer';
 
 const AddOrderTable = () => {
+
   const [form] = Form.useForm();
+
+  const [order, setOrder] = useState(null)
 
   const [products, setProducts] = useState([]);
 
@@ -42,6 +49,8 @@ const AddOrderTable = () => {
 
   const history = useHistory();
 
+  const {id} = useParams();
+
   const fetchProducts = async () => {
     const url =
       'https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json';
@@ -54,10 +63,58 @@ const AddOrderTable = () => {
     setCustomers(await getData(url, customerConvert));
   };
 
+  const fetchOrderByOrderId = async (orderId) => {
+    const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${orderId}.json`;
+    setOrder(await getData(url, null));
+  }
+
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
-  }, []);
+  },[]);
+
+  useEffect(() => {
+    fetchOrderByOrderId(id)
+  },[id])
+
+  useEffect(() => {
+    if(id && customers.length !== 0 && products.length !== 0 && order){
+      const customerOrder = customers.find((item) => item.key === order.customerId)
+      const deliveryAddress = order.delivery
+      const productsOfOrder = order.products.map((product) =>{
+        return{
+          key: product.key,
+          product: product.name,
+          productId: product.key,
+          quantity: product.quantity,
+          price: product.price,
+          total: product.total,
+          desc: product.desc,
+          isEdit: true,
+        }
+      })
+      setCustomer(customerOrder)
+      setTempItems(productsOfOrder)
+      for(const product of productsOfOrder){
+        form.setFieldsValue({
+          [`${product.key}`]: {
+            product: product.key,
+            desc: product.desc,
+            quantity: product.quantity
+          },
+          customer: customerOrder.key
+        });
+      }
+      let total = 0
+      for (const item of productsOfOrder) {
+        total = total + item.total;
+      }
+      setTotal(total);
+      form.setFieldsValue({
+        delivery: deliveryAddress
+      })
+    }
+  },[id, customer, order, products])
 
   const checkDuplicate = (value) => {
     return tempItems.filter((item) => item.productId === value).length > 1;
@@ -79,7 +136,8 @@ const AddOrderTable = () => {
     setCustomer(currentCustomer);
     form.setFieldsValue({
       customer: currentCustomer.key,
-    });
+      delivery: currentCustomer.address
+    })
   };
 
   const addNewItems = () => {
@@ -90,6 +148,7 @@ const AddOrderTable = () => {
         desc: 'No desc',
       },
     });
+
     const newItem = {
       key: key,
       product: '',
@@ -98,7 +157,7 @@ const AddOrderTable = () => {
       price: 0,
       total: 0,
       desc: '',
-      isNew: true,
+      isEdit: true,
     };
     setTempItems([...tempItems, { ...newItem }]);
   };
@@ -177,6 +236,7 @@ const AddOrderTable = () => {
     }
     setTotal(total);
     setTempItems(copyItems);
+    
   };
 
   const columnsItems = columns.map((column) => {
@@ -191,7 +251,7 @@ const AddOrderTable = () => {
         title: column.title,
         dataIndex: column.dataIndex,
         editable: column.editable,
-        editing: record.isNew,
+        editing: record.isEdit,
         isDuplicate: checkDuplicate,
         getData: getDataHandler,
         dataSelect:
@@ -201,8 +261,7 @@ const AddOrderTable = () => {
   });
 
   const checkoutOrder = async () => {
-    const url =
-      'https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json';
+    
     try {
       await form.validateFields();
       const listProducts = tempItems.map((item) => {
@@ -213,22 +272,37 @@ const AddOrderTable = () => {
           total: item.total,
           quantity: item.quantity,
           name: item.product,
+          isEdit: item.isEdit
         };
       });
       const orderData = {
         customerId: customer.key,
         products: listProducts,
         dateOrder: new Date(),
+        delivery: form.getFieldValue("delivery")
       };
-      console.log(orderData);
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
-      message.success('Add order completed');
+      
+      if(id){
+        const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${id}.json`;
+        const response = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        });
+        message.success('Update order completed');
+      }else{
+        const url = 'https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json';
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        });
+        message.success('Add order completed');
+      }
       history.push('/order');
     } catch (error) {
       console.log('Checkout error');
@@ -240,12 +314,13 @@ const AddOrderTable = () => {
       <Form form={form} validateMessages={validateMessages} component={false}>
         <Row>
           <Col>
-            <Form.Item name="customer" rules={[{ required: true }]}>
+           {!id && <Form.Item name="customer" rules={[{ required: true }]}>
               <SelectCustomer
                 selectCustomerHandler={selectCustomerHandler}
                 customers={customers}
+                customer={customer}
               />
-            </Form.Item>
+            </Form.Item>}
           </Col>
         </Row>
         <Row>
@@ -265,7 +340,13 @@ const AddOrderTable = () => {
             style={{ width: '300px' }}
             name="delivery"
             label="Delivery to"
-            placeholder="Please enter deli"
+            rules={[
+              {
+                required: true,
+                message: "Delivery is required.",
+    
+              }
+            ]}
           >
             <Input />
           </Form.Item>

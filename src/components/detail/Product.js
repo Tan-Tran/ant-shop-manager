@@ -17,13 +17,13 @@ import validateMessages from '../common/form/ValidateMessages';
 import EditableCell from '../common/table/EditTableCell';
 import InputType from '../common/table/InputType';
 
-import { productConvert } from '../Adapters/DataConvert';
+import { productConvert } from '../adapters/DataConvert';
 import {
   getData,
   addData,
   updateData,
   deleteData,
-} from '../Adapters/FetchData';
+} from '../adapters/FetchData';
 
 const Product = () => {
   const [form] = Form.useForm();
@@ -225,7 +225,7 @@ const Product = () => {
             type="primary"
             onClick={addRowProduct}
           >
-            <AppstoreAddOutlined /> Add new record
+            <AppstoreAddOutlined /> Add new product
           </Button>
         </div>
       </Form>
