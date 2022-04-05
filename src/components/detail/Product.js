@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { Table, Button, Space, Form, message } from 'antd';
 
-import {
-  DeleteOutlined,
-  EditOutlined,
-  AppstoreAddOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  PlusCircleOutlined,
-} from '@ant-design/icons';
+import {DeleteOutlined,EditOutlined,AppstoreAddOutlined,CheckOutlined,CloseOutlined,PlusCircleOutlined} from '@ant-design/icons';
 
 import 'antd/dist/antd.css';
 
@@ -18,14 +11,10 @@ import EditableCell from '../common/table/EditTableCell';
 import InputType from '../common/table/InputType';
 
 import { productConvert } from '../adapters/DataConvert';
-import {
-  getData,
-  addData,
-  updateData,
-  deleteData,
-} from '../adapters/FetchData';
+import { getData,addData,updateData,deleteData } from '../adapters/FetchData';
 
 const Product = () => {
+  
   const [form] = Form.useForm();
 
   const [products, setProducts] = useState([]);
@@ -97,45 +86,36 @@ const Product = () => {
     setProducts([...products, { ...newRowData }]);
   };
 
-  const updateRecord = async (key) => {
+  const saveRecord = async (record) => {
+    const key = record.key
     await form.validateFields();
     const data = form.getFieldValue(key);
-    const id = await updateData(
-      `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`,
-      data
-    );
+    let id =''
+    let messageContent = ''
+    if(record.isNew){
+      id = await addData(
+        'https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json',
+        data
+      );
+      messageContent = 'Add new product'
+    }else{
+      id = await updateData(
+        `https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`,
+        data
+      );
+      messageContent = 'Update product'
+    }  
     const copyProducts = [...products];
     const index = copyProducts.findIndex((product) => product.key === key);
     copyProducts[index] = { ...data, key: id };
     setProducts(copyProducts);
     setEditingKeys(editingKeys.filter((item) => item !== key));
-    message.success('Update successfully');
-  };
-
-  const saveRecord = async (key) => {
-    await form.validateFields();
-    const data = form.getFieldValue(key);
-    const id = await addData(
-      'https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json',
-      data
-    );
-    const copyProducts = [...products];
-    const index = copyProducts.findIndex((product) => product.key === key);
-    copyProducts[index] = { ...data, key: id };
-    setProducts(copyProducts);
-    setEditingKeys(editingKeys.filter((item) => item !== key));
-    message.success('Add a new product successfully');
+    message.success(`${messageContent} successfully`);
   };
 
   const columns = [
     { title: 'Name', dataIndex: 'name', key: 'name', editable: true, width: '250px' },
-    {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      editable: true,
-      width: '250px'
-    },
+    { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true, width: '250px'},
     { title: 'Price', dataIndex: 'price', key: 'price', editable: true, width: '250px' },
     { title: 'Origin', dataIndex: 'origin', key: 'origin', editable: true, width: '250px'},
     { title: 'Description', dataIndex: 'desc', key: 'desc', editable: true, width: '250px' },
@@ -148,7 +128,7 @@ const Product = () => {
         return !record.isNew ? (
           editable ? (
             <Space>
-              <Button type="primary" onClick={() => updateRecord(record.key)}>
+              <Button type="primary" onClick={() => saveRecord(record)}>
                 <CheckOutlined />
               </Button>
               <Button danger onClick={() => cancelUpdateRecord(record.key)}>
@@ -172,7 +152,7 @@ const Product = () => {
           )
         ) : (
           <Space>
-            <Button type="primary" onClick={() => saveRecord(record.key)}>
+            <Button type="primary" onClick={() => saveRecord(record)}>
               <PlusCircleOutlined />
             </Button>
             <Button danger onClick={() => cancelAddNewRecord(record.key)}>

@@ -105,10 +105,7 @@ const AddOrderTable = () => {
           customer: customerOrder.key
         });
       }
-      let total = 0
-      for (const item of productsOfOrder) {
-        total = total + item.total;
-      }
+      let total = productsOfOrder.reduce(( previousValue, currentValue ) => previousValue + currentValue.total,0)
       setTotal(total);
       form.setFieldsValue({
         delivery: deliveryAddress
@@ -162,58 +159,6 @@ const AddOrderTable = () => {
     setTempItems([...tempItems, { ...newItem }]);
   };
 
-  const columns = [
-    {
-      title: 'Product',
-      dataIndex: 'product',
-      key: 'product',
-      editable: true,
-      width: '300px',
-    },
-    {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      editable: true,
-      width: '200px',
-    },
-    {
-      title: 'Price',
-      dataIndex: 'price',
-      key: 'price',
-      editable: false,
-      width: '200px',
-    },
-    {
-      title: 'Total',
-      dataIndex: 'total',
-      key: 'total',
-      editable: false,
-      width: '200px',
-    },
-    {
-      title: 'Notes',
-      dataIndex: 'desc',
-      key: 'desc',
-      editable: true,
-      width: '400px',
-    },
-    {
-      title: 'Action',
-      dataIndex: '',
-      key: '',
-      render: (record) => {
-        return (
-          <Space>
-            <Button danger onClick={() => removeCurrentProduct(record.key)}>
-              <DeleteOutlined />
-            </Button>
-          </Space>
-        );
-      },
-    },
-  ];
-
   const getDataHandler = (data) => {
     const key = data.key;
     const dataUpdate = form.getFieldValue(key);
@@ -230,35 +175,11 @@ const AddOrderTable = () => {
       desc: dataUpdate.desc,
     };
     copyItems[indexItemNeedUpdate] = newTempItems;
-    let total = 0;
-    for (const item of copyItems) {
-      total = total + item.total;
-    }
+    let total = copyItems.reduce(( previousValue, currentValue ) => previousValue + currentValue.total,0)
     setTotal(total);
     setTempItems(copyItems);
     
   };
-
-  const columnsItems = columns.map((column) => {
-    if (!column.editable) {
-      return column;
-    }
-    return {
-      ...column,
-      onCell: (record) => ({
-        record,
-        inputType: InputType(column.dataIndex),
-        title: column.title,
-        dataIndex: column.dataIndex,
-        editable: column.editable,
-        editing: record.isEdit,
-        isDuplicate: checkDuplicate,
-        getData: getDataHandler,
-        dataSelect:
-          column.dataIndex === 'product' ? { product: products } : null,
-      }),
-    };
-  });
 
   const checkoutOrder = async () => {
     
@@ -308,6 +229,49 @@ const AddOrderTable = () => {
       console.log('Checkout error');
     }
   };
+
+  const columns = [
+    { title: 'Product', dataIndex: 'product', key: 'product', editable: true, width: '300px',},
+    { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true, width: '200px',},
+    { title: 'Price', dataIndex: 'price', key: 'price', editable: false, width: '200px',},
+    { title: 'Total', dataIndex: 'total', key: 'total',editable: false, width: '200px',},
+    { title: 'Notes', dataIndex: 'desc', key: 'desc', editable: true, width: '400px',},
+    {
+      title: 'Action',
+      dataIndex: '',
+      key: '',
+      render: (record) => {
+        return (
+          <Space>
+            <Button danger onClick={() => removeCurrentProduct(record.key)}>
+              <DeleteOutlined />
+            </Button>
+          </Space>
+        );
+      },
+    },
+  ];
+
+  const columnsItems = columns.map((column) => {
+    if (!column.editable) {
+      return column;
+    }
+    return {
+      ...column,
+      onCell: (record) => ({
+        record,
+        inputType: InputType(column.dataIndex),
+        title: column.title,
+        dataIndex: column.dataIndex,
+        editable: column.editable,
+        editing: record.isEdit,
+        isDuplicate: checkDuplicate,
+        getData: getDataHandler,
+        dataSelect:
+          column.dataIndex === 'product' ? { product: products } : null,
+      }),
+    };
+  });
 
   return (
     <div style={{ padding: 16 }}>

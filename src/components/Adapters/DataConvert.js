@@ -19,6 +19,7 @@ export const customerConvert = (data) => {
     customerList.push({
       key: key,
       name: data[key].name,
+      age: data[key].age,
       address: data[key].address,
       dateOfBirth: data[key].dateOfBirth,
       phone: data[key].phone,

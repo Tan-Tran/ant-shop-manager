@@ -5,10 +5,6 @@ import Customer from './components/detail/Customer'
 import Product from './components/detail/Product'
 import Order from './components/detail/Order'
 
-import AddCustomer from './components/pages/AddCustomer'
-import EditCustomer from './components/pages/EditCustomer'
-import AddProduct from './components/pages/AddProduct'
-import EditProduct from './components/pages/EditProduct'
 import AddOrderTable from './components/pages/AddOrderTable'
 
 import 'antd/dist/antd.css'
@@ -52,23 +48,6 @@ function App() {
 
                       <Route path="/order" exact>
                         <Order/>
-                      </Route>
-
-                      <Route path="/add-customer">
-                        <AddCustomer/>
-                      </Route>
-
-
-                      <Route path="/customer/:id">
-                        <EditCustomer/>
-                      </Route>
-
-                      <Route path="/add-product">
-                        <AddProduct/>
-                      </Route>
-
-                      <Route path="/product/:id">
-                        <EditProduct/>
                       </Route>
 
                       <Route path="/order/new">

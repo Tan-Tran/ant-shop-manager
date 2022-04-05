@@ -1,38 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
-import {
-  Table,
-  Button,
-  Space,
-  Spin,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  message,
-} from 'antd';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  UserAddOutlined,
-  LoadingOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  PlusOutlined,
-  PlusCircleOutlined
-} from '@ant-design/icons';
+import {Table,Button,Space,DatePicker,Form,Input,InputNumber,message} from 'antd';
+
+import {DeleteOutlined,EditOutlined,UserAddOutlined,CheckOutlined,CloseOutlined, PlusCircleOutlined} from '@ant-design/icons';
 
 import moment from 'moment';
 
 import formatDate from '../format/formatDate';
 
+import { getData, deleteData } from '../adapters/FetchData';
+
+import {customerConvert} from '../adapters/DataConvert';
+
 import 'antd/dist/antd.css';
 
 import './Customer.css';
 
-const loadingIcon = <LoadingOutlined style={{ fontSize: 40 }} spin />;
-
 const Customer = () => {
+
   const [form] = Form.useForm();
 
   const [customers, setCustomers] = useState([]);
@@ -43,56 +28,21 @@ const Customer = () => {
 
   const [rowData, setRowData] = useState(null);
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const fetchCustomers = async () => {
     const url =
       'https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json';
-    setIsLoading(true);
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Some thing went wrong!');
-      }
-      const data = await response.json();
-      const loadedCustomers = [];
-      for (const key in data) {
-        loadedCustomers.push({
-          key: key,
-          name: data[key].name,
-          age: data[key].age,
-          address: data[key].address,
-          dateOfBirth: data[key].dateOfBirth,
-          phone: data[key].phone,
-        });
-      }
-      setCustomers(loadedCustomers);
-      setHasNewCustomerBefore(false);
-    } catch (error) {
-      console.log('error', error);
-    }
-    setIsLoading(false);
+    setCustomers(await getData(url, customerConvert));
   };
 
   useEffect(() => {
     fetchCustomers();
   }, []);
 
-  const handleDelete = (key) => {
-    const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`;
-
-    const removeCustomer = async () => {
-      try {
-        const response = await fetch(url, {
-          method: 'DELETE',
-        });
-        const newCustomers = customers.filter((item) => item.key !== key);
-        setCustomers(newCustomers);
-      } catch (error) {
-        console.log('delete error');
-      }
-    };
-    removeCustomer();
+  const handleDelete = async (key) => {
+    await deleteData(
+      `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`
+    );
+    setCustomers(customers.filter((item) => item.key !== key));
   };
 
   const columns = [
@@ -295,9 +245,7 @@ const Customer = () => {
             'Content-Type': 'application/json',
           },
         });
-        // remove edit cell
         setEditRowId(null);
-        // update customers with a new customer data
         const indexRowUpdate = customers.findIndex(
           (item) => item.key === editRowId
         );
@@ -305,7 +253,6 @@ const Customer = () => {
         newCustomer[indexRowUpdate] = { ...newRowData, key: editRowId };
         setCustomers(newCustomer);
         setRowData(null);
-        // info show success
         message.success('Complete add new customer', 2);
         setHasNewCustomerBefore(false);
         fetchCustomers();
@@ -321,9 +268,7 @@ const Customer = () => {
           },
           body: JSON.stringify(newRowData),
         });
-        // remove edit cell
         setEditRowId(null);
-        // update customers with a new customer data
         const indexRowUpdate = customers.findIndex(
           (item) => item.key === editRowId
         );
@@ -331,7 +276,6 @@ const Customer = () => {
         newCustomer[indexRowUpdate] = { ...newRowData, key: editRowId };
         setCustomers(newCustomer);
         setRowData(null);
-        // info show success
         message.success('Update complete', 2);
         setHasNewCustomerBefore(false);
       };
@@ -340,46 +284,43 @@ const Customer = () => {
   };
 
   const addNewRowHandler = () => {
+
+    const key = Date.now();
+
+    if (hasNewCustomerBefore) {
+      return message.warning('Please complete add a current customer!', 2);
+    }
+    
     form.setFieldsValue({
       name: '',
-      age: '',
+      age: 1,
       address: '',
       phone: '',
       birth: moment(new Date().toLocaleDateString('en-GB'), formatDate),
     });
-    if (hasNewCustomerBefore) {
-      return message.warning('Please complete add a current customer!', 2);
-    }
-    const numberOfCustomers = customers.length;
+    
     const newCustomer = {
-      key: numberOfCustomers,
+      key: key,
       name: '',
-      age: 0,
+      age: 1,
       address: '',
       phone: '',
       new: true,
     };
-    const newCustomers = [...customers, { ...newCustomer }];
-    setEditRowId(numberOfCustomers);
-    setCustomers(newCustomers);
+
+    setEditRowId(key);
+    setCustomers([...customers, { ...newCustomer }]);
     setHasNewCustomerBefore(true);
   };
 
   const cancelAddNewRow = (key) => {
-    const customerIndex = customers.findIndex((item) => item.key === key);
-    const newCustomers = [...customers];
-    newCustomers.splice(customerIndex, 1);
-    setCustomers(newCustomers);
+    const customersAfterRemoveEmptyRow = customers.filter((customer) => customer.key !== key);
+    setCustomers(customersAfterRemoveEmptyRow);
     setHasNewCustomerBefore(false);
   };
 
   return (
     <>
-      {isLoading && (
-        <div className="loading">
-          <Spin indicator={loadingIcon}></Spin>
-        </div>
-      )}
       <Form form={form} onFinish={submitHandler}>
         <Table dataSource={customers} bordered columns={columns} pagination={false}/>
       </Form>
