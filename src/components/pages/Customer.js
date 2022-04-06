@@ -10,11 +10,11 @@ import formatDate from '../format/formatDate';
 
 import { getData, deleteData } from '../adapters/FetchData';
 
+import {getCustomers, getCustomer, deleteCustomer} from '../api/CustomerApi'
+
 import {customerConvert} from '../adapters/DataConvert';
 
 import 'antd/dist/antd.css';
-
-import './Customer.css';
 
 const Customer = () => {
 

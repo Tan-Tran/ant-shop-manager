@@ -45,3 +45,8 @@ body {
 .select_product_table .ant-select-dropdown{
   width: 200px !important;
 }
+
+
+.add-icon {
+  float: right;
+}

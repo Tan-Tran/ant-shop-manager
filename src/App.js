@@ -1,11 +1,12 @@
 import './App.css';
 import ShopHeader from './components/common/Header'
 import ShopSidebar from './components/common/Sidebar'
-import Customer from './components/detail/Customer'
+import Customer from './components/pages/Customer'
+import CustomerRefactor from './components/pages/CustomerRefactor'
 import Product from './components/detail/Product'
 import Order from './components/detail/Order'
 
-import AddOrderTable from './components/pages/AddOrderTable'
+import AddOrder from './components/pages/AddOrder'
 
 import 'antd/dist/antd.css'
 import {Layout} from 'antd'
@@ -35,11 +36,11 @@ function App() {
                   <Content>
                     <Switch>
                       <Route path="/" exact>
-                        <Customer/>
+                        <CustomerRefactor/>
                       </Route>
 
                       <Route path="/customer" exact>
-                        <Customer/>
+                        <CustomerRefactor/>
                       </Route>
 
                       <Route path="/product" exact>
@@ -51,11 +52,11 @@ function App() {
                       </Route>
 
                       <Route path="/order/new">
-                        <AddOrderTable/>
+                        <AddOrder/>
                       </Route>
 
                       <Route path="/order/:id">
-                        <AddOrderTable/>
+                        <AddOrder/>
                       </Route>
 
                       </Switch>
