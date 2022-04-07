@@ -14,15 +14,12 @@ const EditableCell = ({
   elementProps,
   ...restProps
 }) => {
-  let childNode = children
-  const Element = inputType
+  let childNode = children;
+  const Element = inputType;
   if (editable) {
     childNode = editing ? (
-      <Form.Item
-        name={[record.key, dataIndex]}
-        {...formItemProps}
-      >
-        <Element {...elementProps}/>
+      <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
+        <Element {...elementProps} />
       </Form.Item>
     ) : (
       <div>{children}</div>
