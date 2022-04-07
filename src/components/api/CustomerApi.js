@@ -20,7 +20,7 @@ export const addCustomer = async(bodyData) =>{
         body: JSON.stringify(bodyData)
     })
     const data = await response.json()
-    const {id} = data.name
+    const id = data.name
     return id
 }
 
@@ -33,13 +33,12 @@ export const updateCustomer = async(key, bodyData) =>{
         body: JSON.stringify(bodyData)
     })
     const data = await response.json()
-    const {id} = data.name
+    const id = data.name
     return id
 }
 
 export const deleteCustomer = async(key) =>{
-    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`)
-    const data = response.json()
-    const {id} = data.name
-    return id
+    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`,{
+        method: 'DELETE',
+    })
 }

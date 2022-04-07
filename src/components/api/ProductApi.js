@@ -20,7 +20,7 @@ export const addProduct = async(dataBody) =>{
         body: JSON.stringify(dataBody)
     })
     const data = await response.json()
-    const {id} = data.name
+    const id = data.name
     return id
 }
 
@@ -33,6 +33,12 @@ export const updateProduct = async(key, dataBody) =>{
         body: JSON.stringify(dataBody)
     })
     const data = await response.json()
-    const {id} = data.name
+    const id = data.name
     return id
+}
+
+export const deleteProduct = async(key) =>{
+    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`,{
+        method: 'DELETE',
+    })
 }

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, DatePicker, Popconfirm, Typography, Space } from 'antd';
+import { Form, Input, DatePicker, Popconfirm, Typography, Space, Button, message } from 'antd';
+import { AppstoreAddOutlined } from '@ant-design/icons';
 import EditTable from '../common/table/EditTable';
 import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
-import { getAllCustomers, updateCustomer } from '../api/CustomerApi';
-
+import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer } from '../api/CustomerApi';
 import moment from 'moment';
 
 const CustomerRefactor = () => {
   const [form] = Form.useForm();
   const [customers, setCustomers] = useState(null);
   const [editingKey, setEditingKey] = useState('');
+  const [isExistNewRow, setIsExistNewRow] = useState(false)
 
   useEffect(() => {
     getAllCustomers().then((data) =>
@@ -19,7 +20,7 @@ const CustomerRefactor = () => {
             key: key,
             name: data[key].name,
             address: data[key].address,
-            dateOfBirth: data[key].dateOfBirth,
+            dateOfBirth: moment(data[key].dateOfBirth).format(FormatDate_DD_MM_YYY),
             phone: data[key].phone,
           };
         })
@@ -31,18 +32,36 @@ const CustomerRefactor = () => {
     return editingKey === record.key;
   };
 
-  const save = async (record) => {
-    const data = await form.validateFields();
-    const key = record.key;
+  const save = async (key) => {
+    let data = ''
+    try{
+        data = await form.validateFields();
+    }catch(error){
+        console.log("Empty input")
+        return;
+    }
     const newData = [...customers];
     const index = customers.findIndex((item) => item.key === key);
-    const id = updateCustomer(key, data[key]);
-    newData[index] = {
-      ...data[key],
-      key: id,
-      dateOfBirth: moment(data[key].dateOfBirth).format(FormatDate_DD_MM_YYY),
-    };
-    setCustomers(newData);
+    if(customers[index].isNew){
+        await addCustomer(data[key]).
+            then((id) => newData[index] = {
+                    ...data[key], 
+                    key: id,
+                    dateOfBirth: moment(data[key].dateOfBirth).format(FormatDate_DD_MM_YYY)
+            }).
+            then(() => setCustomers(newData)).
+            then(() => setIsExistNewRow(false)).
+            then(() => message.success("Add customer successfully"))
+    }else{
+        await updateCustomer(key, data[key]).
+            then((id) => newData[index] = {
+                ...data[key],
+                key: id,
+                dateOfBirth: moment(data[key].dateOfBirth).format(FormatDate_DD_MM_YYY)
+            }).
+            then(() => setCustomers(newData)).
+            then(() => message.success("Update customer successfully"))
+    }
     setEditingKey('');
   };
 
@@ -59,18 +78,43 @@ const CustomerRefactor = () => {
   };
 
   const cancel = (record) => {
+    if(record.isNew){
+      setCustomers([...customers].filter((customer) => customer.key !== record.key))
+    }
     setEditingKey('');
+    setIsExistNewRow(false);
   };
 
-  const remove = (record) => {};
+  const remove = (key) => {
+    deleteCustomer(key).
+        then(() => setCustomers([...customers].filter((customer) => customer.key !== key))).
+        then(() => message.success("Delete successful"))
+  };
+
+  const addNewRow = () =>{
+      if(isExistNewRow){
+        return message.warning('Please complete add a current customer!', 2);
+      }
+      const key = Date.now()
+      const newCustomer = {
+          key: key,
+          name: '',
+          address: '',
+          dateOfBirth: moment(new Date().toLocaleDateString('en-GB')).format(FormatDate_DD_MM_YYY),
+          isNew: true,
+      }
+      setIsExistNewRow(true)
+      setCustomers([...customers, {...newCustomer}])
+      setEditingKey(key)
+  }
 
   const columns = [
     {
       title: 'Name',
       dataIndex: 'name',
       editable: true,
-      dataType: <Input />,
-      restProps: {
+      inputType: Input,
+      formItemProps: {
         rules: [
           {
             required: true,
@@ -78,7 +122,7 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '20%',
+          width: '50%',
         },
       },
       style: {
@@ -89,8 +133,8 @@ const CustomerRefactor = () => {
       title: 'Address',
       dataIndex: 'address',
       editable: true,
-      dataType: <Input />,
-      restProps: {
+      inputType: Input,
+      formItemProps: {
         rules: [
           {
             required: true,
@@ -98,7 +142,7 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '20%',
+          width: '50%',
         },
       },
       style: {
@@ -109,7 +153,10 @@ const CustomerRefactor = () => {
       title: 'Date of birth',
       dataIndex: 'dateOfBirth',
       editable: true,
-      restProps: {
+      elementProps:{
+          format: FormatDate_DD_MM_YYY
+      },
+      formItemProps: {
         rules: [
           {
             required: true,
@@ -117,10 +164,10 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '20%',
+          width: '50%',
         },
       },
-      dataType: <DatePicker format={FormatDate_DD_MM_YYY} />,
+      inputType: DatePicker,
       style: {
         width: '20%',
       },
@@ -129,8 +176,8 @@ const CustomerRefactor = () => {
       title: 'Phone',
       dataIndex: 'phone',
       editable: true,
-      dataType: <Input />,
-      restProps: {
+      inputType: Input,
+      formItemProps: {
         rules: [
           {
             required: true,
@@ -138,7 +185,7 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '20%',
+          width: '50%',
         },
       },
       style: {
@@ -148,6 +195,7 @@ const CustomerRefactor = () => {
     {
       title: 'Action',
       dataIndex: '',
+      inputType: 'option',
       style: {
         width: '20%',
       },
@@ -156,14 +204,14 @@ const CustomerRefactor = () => {
         return editable ? (
           <span>
             <Typography.Link
-              onClick={() => save(record)}
+              onClick={() => save(record.key)}
               style={{
                 marginRight: 8,
               }}
             >
               Save
             </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+            <Popconfirm title="Sure to cancel?" onConfirm={() => cancel(record)}>
               <a>Cancel</a>
             </Popconfirm>
           </span>
@@ -178,7 +226,7 @@ const CustomerRefactor = () => {
               </Typography.Link>
               <Typography.Link
                 disabled={editingKey !== ''}
-                onClick={() => remove(record)}
+                onClick={() => remove(record.key)}
               >
                 Delete
               </Typography.Link>
@@ -189,26 +237,34 @@ const CustomerRefactor = () => {
     },
   ];
 
-  const mergeColumns = columns.map((column) => {
-    if (!column.editable) {
-      return column;
-    }
-    return {
-      ...column,
-      onCell: (record) => ({
-        record,
-        editable: column.editable,
-        inputType: column.dataType,
-        dataIndex: column.dataIndex,
-        title: column.title,
-        editing: isEditing(record),
-        restProps: column.restProps,
-      }),
-    };
-  });
-
   return (
-    <EditTable columns={mergeColumns} dataSource={customers} form={form} />
+      <>
+        <EditTable 
+          columns={columns} 
+          dataSource={customers} 
+          form={form} 
+          pagination={false}
+          editable={
+            {
+              isEditing: isEditing
+            }
+          }
+        />
+        <div style={{ width: '100%' }}>
+          <Button
+            style={{
+              width: '100%',
+              color: '#1890ff',
+              backgroundColor: '#cccc',
+              borderColor: '#cccc',
+            }}
+            type="primary"
+            onClick={addNewRow}
+          >
+            <AppstoreAddOutlined/> Add new customer
+          </Button>
+        </div>
+      </>
   );
 };
 

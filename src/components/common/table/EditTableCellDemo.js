@@ -10,21 +10,19 @@ const EditableCell = ({
   title,
   editing,
   children,
-  restProps,
-  ...restPropsCell
+  formItemProps,
+  elementProps,
+  ...restProps
 }) => {
-  let childNode = children;
-
+  let childNode = children
+  const Element = inputType
   if (editable) {
-    const { rules, style } = restProps;
     childNode = editing ? (
       <Form.Item
         name={[record.key, dataIndex]}
-        rules={rules}
-        style={style}
-        {...restPropsCell}
+        {...formItemProps}
       >
-        {inputType}
+        <Element {...elementProps}/>
       </Form.Item>
     ) : (
       <div>{children}</div>

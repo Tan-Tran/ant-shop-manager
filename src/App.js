@@ -4,6 +4,7 @@ import ShopSidebar from './components/common/Sidebar'
 import Customer from './components/pages/Customer'
 import CustomerRefactor from './components/pages/CustomerRefactor'
 import Product from './components/detail/Product'
+import ProductRefactors from './components/pages/ProductRefactor'
 import Order from './components/detail/Order'
 
 import AddOrder from './components/pages/AddOrder'
@@ -44,7 +45,7 @@ function App() {
                       </Route>
 
                       <Route path="/product" exact>
-                        <Product/>
+                        <ProductRefactors/>
                       </Route>
 
                       <Route path="/order" exact>
