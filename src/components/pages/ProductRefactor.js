@@ -107,7 +107,6 @@ const ProductRefactors = () =>{
         return editingKeys.find((key) => key === record.key)? true: false
     }
 
-
     const columns = [
     { 
         title: 'Name', 
@@ -225,13 +224,11 @@ const ProductRefactors = () =>{
             <span>
                 <Space>
                     <Typography.Link
-                        // disabled={editingKeys !== ''}
                         onClick={() => edit(record)}
                     >
                     Edit
                     </Typography.Link>
                     <Typography.Link
-                        // disabled={editingKeys !== ''}
                         onClick={() => remove(record.key)}
                     >
                     Delete
@@ -244,16 +241,13 @@ const ProductRefactors = () =>{
 
     return(
         <>
-            <EditTable 
+            <EditTable
+                type = 'single'
                 columns={columns} 
                 dataSource={products} 
                 pagination={false} 
-                form={form} 
-                editable={
-                    {
-                      isEditing: isEditing
-                    }
-                  }
+                form={form}
+                isEditing={isEditing}
             />
             <div style={{ width: '100%' }}>
                 <Button

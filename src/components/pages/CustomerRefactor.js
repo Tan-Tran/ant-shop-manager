@@ -142,7 +142,7 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '50%',
+          width: '100%',
         },
       },
       style: {
@@ -164,7 +164,7 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '50%',
+          width: '100%',
         },
       },
       inputType: DatePicker,
@@ -185,7 +185,7 @@ const CustomerRefactor = () => {
           },
         ],
         style: {
-          width: '50%',
+          width: '100%',
         },
       },
       style: {
@@ -194,8 +194,6 @@ const CustomerRefactor = () => {
     },
     {
       title: 'Action',
-      dataIndex: '',
-      inputType: 'option',
       style: {
         width: '20%',
       },
@@ -204,7 +202,7 @@ const CustomerRefactor = () => {
         return editable ? (
           <span>
             <Typography.Link
-              onClick={() => save(record.key)}
+              onClick={save}
               style={{
                 marginRight: 8,
               }}
@@ -239,16 +237,13 @@ const CustomerRefactor = () => {
 
   return (
       <>
-        <EditTable 
+        <EditTable
+          type='single'
           columns={columns} 
-          dataSource={customers} 
-          form={form} 
+          dataSource={customers}
+          form={form}
           pagination={false}
-          editable={
-            {
-              isEditing: isEditing
-            }
-          }
+          isEditing = {isEditing}
         />
         <div style={{ width: '100%' }}>
           <Button

@@ -1,11 +1,39 @@
-import { Form, Table } from 'antd';
+import React,{useEffect} from 'react';
+import { Form, Table, DatePicker} from 'antd';
 import EditableCell from '../../common/table/EditTableCellDemo';
+import moment from 'moment';
+import { FormatDate_DD_MM_YYY } from '../../format/date/FormatDate';
+
+const covertDataTypeDatePicker = (data, columns) =>{
+  for(const column of columns){
+    if(column.inputType === DatePicker){
+      return{
+        ...data,
+        [`${column.dataIndex}`]: moment(data[column.dataIndex], FormatDate_DD_MM_YYY)
+      }
+    }
+  }
+}
 
 const EditTable = (props) => {
-  const { form, columns, dataSource, pagination, editable, ...restProps } =
-    props;
 
-  const { isEditing, onChange } = editable;
+  const { form, columns, dataSource, pagination, type, isEditing, onEdit,...restProps } = props;
+
+  useEffect(() => {
+    if(dataSource){
+      if(type === 'multiple'){
+        for(const data of dataSource){
+          form.setFieldsValue({
+            [`${data.key}`]:{
+              ...data,
+              ...covertDataTypeDatePicker(data, columns)
+            }
+          })
+        }
+      }
+    }
+  },[dataSource])
+
 
   const mergeColumns = columns.map((column) => {
     if (!column.editable) {
@@ -19,8 +47,8 @@ const EditTable = (props) => {
         inputType: column.inputType,
         dataIndex: column.dataIndex,
         title: column.title,
-        editing: isEditing(record),
-        onChange: onChange,
+        onEdit: onEdit,
+        editing: type === 'multiple'? true: isEditing? isEditing(record): false,
         formItemProps: column.formItemProps,
         elementProps: column.elementProps,
       }),

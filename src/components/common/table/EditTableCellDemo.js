@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { Form } from 'antd';
 
 const EditableCell = ({
@@ -12,24 +11,22 @@ const EditableCell = ({
   children,
   formItemProps,
   elementProps,
-  onChange,
+  onEdit,
   ...restProps
 }) => {
   let childNode = children;
   const Element = inputType;
-  if (editable) {
-    childNode = editing ? (
-      <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
-        <Element
-          {...elementProps}
-          onChange={(values) => onChange({ values, record })}
-        />
-      </Form.Item>
-    ) : (
-      <div>{children}</div>
-    );
-  }
-
+    if (editable) {
+      childNode = editing ? (
+        <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
+          <Element {...elementProps}
+            onChange = {(value) => onEdit? onEdit(record.key):''}
+          />
+        </Form.Item>
+      ) : (
+        <div>{children}</div>
+      );
+    }
   return <td {...restProps}>{childNode}</td>;
 };
 

@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Form,
-  Input,
-  Popconfirm,
-  Typography,
-  Space,
-  Button,
-  message,
-  InputNumber,
-  Select,
-  Row,
-  Divider,
-} from 'antd';
+import {Form,Input,Popconfirm,Typography,Space,Button,message,InputNumber,Select,Row,Divider} from 'antd';
 import { AppstoreAddOutlined } from '@ant-design/icons';
 import EditTable from '../common/table/EditTable';
 import { getAllProducts } from '../api/ProductApi';
@@ -32,8 +20,6 @@ const AddOrderRefactor = () => {
   const [customers, setCustomers] = useState(null);
 
   const [customer, setCustomer] = useState(null);
-
-  const [editingKeys, setEditingKeys] = useState([]);
 
   const [totalCostOrder, setTotalCostOrder] = useState(0);
 
@@ -76,13 +62,27 @@ const AddOrderRefactor = () => {
     );
   }, []);
 
-  const remove = () => {};
-
-  const updateDataHandler = (values) => {
-    console.log(values);
+  const remove = (key) => {
+      setProductsOfOrder([...productsOfOrder].filter((item) => item.key !== key))
   };
 
-  const checkDuplicate = (values) => {};
+  const updateDataProductsOfOrder = (key) => {
+    const {productId, quantity} = form.getFieldValue(key)
+    const productFireBase =  products.find((product) => product.key === productId)
+    const copyProductsOrder = [...productsOfOrder]
+    const indexProductOrder = productsOfOrder.findIndex((product) => product.key === key)
+    const productOrderUpdate = {
+      ...[...productsOfOrder][indexProductOrder],
+      productId: productId,
+      quantity: quantity,
+      price: productFireBase.price,
+      total: quantity * productFireBase.price
+    }
+    copyProductsOrder[indexProductOrder] = productOrderUpdate
+    setProductsOfOrder(copyProductsOrder)
+  };
+
+
 
   const columns = [
     {
@@ -155,6 +155,11 @@ const AddOrderRefactor = () => {
       },
     },
     {
+      title: 'Total',
+      editable: false,
+      render: (_, record) => <span>{record?.price * record?.quantity}</span>
+    },
+    {
       title: 'Notes',
       dataIndex: 'desc',
       inputType: Input,
@@ -186,11 +191,7 @@ const AddOrderRefactor = () => {
     },
   ];
 
-  const isEditing = (record) => {
-    return editingKeys.find((item) => item === record.key) ? true : false;
-  };
-
-  const addNewItems = () => {
+  const addNewProduct = () => {
     const key = Date.now();
     form.setFieldsValue({
       [`${key}`]: {
@@ -207,7 +208,6 @@ const AddOrderRefactor = () => {
       desc: '',
     };
     setProductsOfOrder([...productsOfOrder, { ...newItem }]);
-    setEditingKeys([...editingKeys, key]);
   };
 
   const selectCustomer = (key) => {
@@ -217,6 +217,25 @@ const AddOrderRefactor = () => {
       delivery: customer.address,
     });
   };
+
+  const checkoutOrder = () =>{
+    const dataSave = {
+      customerId: customer.key,
+      customerName: customer.name,
+      delivery: form.getFieldValue('delivery'),
+      products: productsOfOrder.map((product) =>{
+        return{
+            productId: product.productId,
+            productName: products.find((item) => item.key === product.productId).name,
+            price: product.price,
+            quantity: product.quantity,
+            total: product.total,
+            desc: product.desc
+        }
+      })
+    }
+    console.log(dataSave)
+  }
 
   return (
     <div style={{ padding: 16 }}>
@@ -249,14 +268,12 @@ const AddOrderRefactor = () => {
           <h4>Total: {totalCostOrder}</h4>
         </Row>
         <EditTable
-          columns={columns}
-          dataSource={productsOfOrder}
-          form={form}
-          pagination={false}
-          editable={{
-            isEditing: isEditing,
-            onChange: updateDataHandler,
-          }}
+          type = "multiple"
+          columns = {columns}
+          dataSource = {productsOfOrder}
+          form = {form}
+          pagination = {false}
+          onEdit ={(key) => updateDataProductsOfOrder(key)}
         />
       </Form>
       <div style={{ width: '100%' }}>
@@ -268,11 +285,18 @@ const AddOrderRefactor = () => {
             borderColor: '#cccc',
           }}
           type="primary"
-          onClick={addNewItems}
+          onClick={addNewProduct}
         >
           <AppstoreAddOutlined /> Add new record
         </Button>
       </div>
+      <div className="add-icon">
+          {productsOfOrder.length > 0 && (
+            <Button type="primary" onClick={checkoutOrder}>
+              Checkout
+            </Button>
+          )}
+        </div>
     </div>
   );
 };
