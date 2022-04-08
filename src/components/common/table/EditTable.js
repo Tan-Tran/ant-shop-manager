@@ -5,7 +5,7 @@ const EditTable = (props) => {
   const { form, columns, dataSource, pagination, editable, ...restProps } =
     props;
 
-  const { isEditing } = editable;
+  const { isEditing, onChange } = editable;
 
   const mergeColumns = columns.map((column) => {
     if (!column.editable) {
@@ -20,6 +20,7 @@ const EditTable = (props) => {
         dataIndex: column.dataIndex,
         title: column.title,
         editing: isEditing(record),
+        onChange: onChange,
         formItemProps: column.formItemProps,
         elementProps: column.elementProps,
       }),

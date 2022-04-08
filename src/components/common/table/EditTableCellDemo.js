@@ -12,6 +12,7 @@ const EditableCell = ({
   children,
   formItemProps,
   elementProps,
+  onChange,
   ...restProps
 }) => {
   let childNode = children;
@@ -19,7 +20,10 @@ const EditableCell = ({
   if (editable) {
     childNode = editing ? (
       <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
-        <Element {...elementProps} />
+        <Element
+          {...elementProps}
+          onChange={(values) => onChange({ values, record })}
+        />
       </Form.Item>
     ) : (
       <div>{children}</div>

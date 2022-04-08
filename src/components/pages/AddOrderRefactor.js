@@ -76,6 +76,14 @@ const AddOrderRefactor = () => {
     );
   }, []);
 
+  const remove = () => {};
+
+  const updateDataHandler = (values) => {
+    console.log(values);
+  };
+
+  const checkDuplicate = (values) => {};
+
   const columns = [
     {
       title: 'Product',
@@ -83,7 +91,6 @@ const AddOrderRefactor = () => {
       editable: true,
       inputType: Select,
       elementProps: {
-        onChange: checkDuplicate,
         placeholder: 'Select product',
         options: products?.map((product) => {
           return {
@@ -114,7 +121,6 @@ const AddOrderRefactor = () => {
       inputType: InputNumber,
       editable: true,
       elementProps: {
-        onChange: selectHandler,
         min: 1,
       },
       formItemProps: {
@@ -179,14 +185,6 @@ const AddOrderRefactor = () => {
       },
     },
   ];
-
-  const remove = () => {};
-
-  const selectHandler = (values) => {
-    console.log(values);
-  };
-
-  const checkDuplicate = (values) => {};
 
   const isEditing = (record) => {
     return editingKeys.find((item) => item === record.key) ? true : false;
@@ -257,6 +255,7 @@ const AddOrderRefactor = () => {
           pagination={false}
           editable={{
             isEditing: isEditing,
+            onChange: updateDataHandler,
           }}
         />
       </Form>
