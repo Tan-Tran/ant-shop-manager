@@ -1,270 +1,185 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Popconfirm, Typography, Space, Button, message, InputNumber } from 'antd';
-import { AppstoreAddOutlined } from '@ant-design/icons';
-import EditTable from '../common/table/EditTable';
-import { getAllProducts, updateProduct, addProduct, deleteProduct} from '../api/ProductApi';
+import { Input, message, InputNumber } from 'antd';
+import EditTableWithAddButton from '../common/table/EditTableWithAddButton';
+import {
+  getAllProducts,
+  updateProduct,
+  addProduct,
+  deleteProduct,
+} from '../api/ProductApi';
 
-const ProductRefactors = () =>{
-    const [form] = Form.useForm()
-    const [products, setProducts] = useState(null)
-    const [editingKeys, setEditingKeys] = useState([])
+const ProductRefactors = () => {
+  const [products, setProducts] = useState(null);
 
-    useEffect(() => {
-        getAllProducts().then((data) => 
-            setProducts(
-                Object.keys(data).map((key)=>{
-                    return{
-                        key: key,
-                        name: data[key].name,
-                        price: data[key].price,
-                        quantity: data[key].quantity,
-                        desc: data[key].desc,
-                        origin: data[key].origin,
-                    }
-                })
-            )
-        )
-    },[])
-
-    const save = async (key) =>{
-        let data = ''
-        try{
-            data = await form.validateFields()
-        }catch(error){
-            console.log("Empty input")
-            return
-        }
-        const newData = [...products]
-        const index = products.findIndex((item) => item.key === key)
-        if(products[index].isNew){
-            await addProduct(data[key]).
-                then((id) => newData[index] = {
-                    ...data[key],
-                    key: id,
-                }).
-                then(() => setProducts(newData)).
-                then(() => message.success("Add product successfully"))
-        }else{
-            await updateProduct(key, data[key]).
-                then((id) => newData[index] = {
-                    ...data[key],
-                    key: id
-                }).
-                then(() => setProducts(newData)).
-                then(() => message.success("Update product successfully"))
-        }
-        setEditingKeys([...editingKeys].filter((item) => item !== key))
-    }
-
-    const cancel = (record) =>{
-        setEditingKeys([...editingKeys].filter((item) => item !== record.key))
-        if(record.isNew){
-            setProducts([...products].filter((item) => item.key !== record.key))
-        }
-    }
-
-    const remove = (key) =>{
-        deleteProduct((key)).
-            then(() => setProducts([...products].filter((product) => product.key !== key))).
-            then(() => message.success("Delete successfully"))
-    }
-
-    const addNewRow = () =>{
-        const key = Date.now()
-        const newProduct = {
+  useEffect(() => {
+    getAllProducts().then((data) =>
+      setProducts(
+        Object.keys(data).map((key) => {
+          return {
             key: key,
-            name: '',
-            price: 1,
-            quantity: 1,
-            desc: '',
-            origin: '',
-            isNew: true
-        }
-        form.setFieldsValue({
-            [`${key}`]:{
-                price: 1,
-                quantity: 1,
-            }
+            name: data[key].name,
+            price: data[key].price,
+            quantity: data[key].quantity,
+            desc: data[key].desc,
+            origin: data[key].origin,
+          };
         })
-        setProducts([...products,{...newProduct}])
-        setEditingKeys([...editingKeys, key])
-    }
+      )
+    );
+  }, []);
 
-    const edit = (record) =>{
-        setEditingKeys([...editingKeys, record.key])
-        form.setFieldsValue({
-            [`${record.key}`]:{
-                name: record.name,
-                price: record.price,
-                quantity: record.quantity,
-                desc: record.desc,
-                origin: record.origin,
-            }
-        })
+  const save = async ({ key, data, method }) => {
+    if (method === 'POST') {
+      await addProduct(data)
+        .then((id) =>
+          setProducts([
+            ...products,
+            {
+              ...data,
+              key: id,
+            },
+          ])
+        )
+        .then(() => message.success('Add product successfully'));
     }
-
-    const isEditing = (record) =>{
-        return editingKeys.find((key) => key === record.key)? true: false
+    if (method === 'PUT') {
+      const newData = [...products];
+      const index = products.findIndex((item) => item.key === key);
+      newData[index] = {
+        ...data,
+      };
+      setProducts(newData);
+      await updateProduct(key, data).then(() =>
+        message.success('Update product successfully')
+      );
     }
+  };
 
-    const columns = [
-    { 
-        title: 'Name', 
-        dataIndex: 'name', 
-        editable: true,
-        inputType: Input,
-        formItemProps:{
-            rules:[{
-                required: true,
-                message: 'Name is required'
-            }],
-            style:{
-                width:'50%'
-            }
+  const remove = (key) => {
+    deleteProduct(key)
+      .then(() =>
+        setProducts([...products].filter((product) => product.key !== key))
+      )
+      .then(() => message.success('Delete successful'));
+  };
+
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      editable: true,
+      inputType: Input,
+      defaultValue: '',
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: 'Name is required',
+          },
+        ],
+        style: {
+          width: '50%',
         },
-        style:{
-            width:'20%'
-        } 
-    },
-    { 
-        title: 'Quantity', 
-        dataIndex: 'quantity', 
-        inputType: InputNumber,
-        editable: true,
-        elementProps:{
-            min: 1
-        },
-        formItemProps:{
-            rules:[{
-                required: true,
-                message: 'Quantity is required'
-            }],
-            style:{
-                width:'50%'
-            }
-        },
-        style:{
-            width:'20%'
-        } 
-    },
-    { 
-        title: 'Price', 
-        dataIndex: 'price',
-        editable: true,
-        inputType: InputNumber,
-        elementProps:{
-            min: 1
-        },
-        formItemProps:{
-            rules:[{
-                required: true,
-                message: 'Quantity is required'
-            }],
-            style:{
-                width:'50%'
-            }
-        },
-        style:{
-            width:'20%'
-        } 
-    },
-    { 
-        title: 'Origin', 
-        dataIndex: 'origin',
-        inputType: Input,
-        editable: true, 
-        formItemProps:{
-            rules:[{
-                required: true,
-                message: 'Origin is required'
-            }],
-            style:{
-                width:'50%'
-            }
-        },
-        style:{
-            width:'20%'
-        } 
-    },
-    { 
-        title: 'Description', 
-        dataIndex: 'desc',
-        inputType: Input,
-        editable: true, 
-        formItemProps:{
-            style:{
-                width:'50%'
-            }
-        },
-        style:{
-            width:'20%'
-        }  
+      },
+      style: {
+        width: '20%',
+      },
     },
     {
-        title: 'Action',
-        dataIndex: '',
-        key: '',
-        render: (_, record) => {
-        const editable = isEditing(record);
-        return editable ? (
-            <span>
-                <Typography.Link
-                    onClick={() => save(record.key)}
-                    style={{
-                        marginRight: 8,
-                    }}
-                >
-                    Save
-                </Typography.Link>
-                <Popconfirm title="Sure to cancel?" onConfirm={() => cancel(record)}>
-                    <a>Cancel</a>
-                </Popconfirm>
-            </span>
-        ) : (
-            <span>
-                <Space>
-                    <Typography.Link
-                        onClick={() => edit(record)}
-                    >
-                    Edit
-                    </Typography.Link>
-                    <Typography.Link
-                        onClick={() => remove(record.key)}
-                    >
-                    Delete
-                    </Typography.Link>
-                </Space>
-            </span>
-        );
+      title: 'Quantity',
+      dataIndex: 'quantity',
+      inputType: InputNumber,
+      defaultValue: 1,
+      editable: true,
+      elementProps: {
+        min: 1,
+      },
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: 'Quantity is required',
+          },
+        ],
+        style: {
+          width: '50%',
         },
-    }]
+      },
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      editable: true,
+      inputType: InputNumber,
+      defaultValue: 1,
+      elementProps: {
+        min: 1,
+      },
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: 'Quantity is required',
+          },
+        ],
+        style: {
+          width: '50%',
+        },
+      },
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Origin',
+      dataIndex: 'origin',
+      inputType: Input,
+      defaultValue: '',
+      editable: true,
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: 'Origin is required',
+          },
+        ],
+        style: {
+          width: '50%',
+        },
+      },
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Description',
+      dataIndex: 'desc',
+      inputType: Input,
+      defaultValue: '',
+      editable: true,
+      formItemProps: {
+        style: {
+          width: '50%',
+        },
+      },
+      style: {
+        width: '20%',
+      },
+    },
+  ];
 
-    return(
-        <>
-            <EditTable
-                type = 'single'
-                columns={columns} 
-                dataSource={products} 
-                pagination={false} 
-                form={form}
-                isEditing={isEditing}
-            />
-            <div style={{ width: '100%' }}>
-                <Button
-                    style={{
-                        width: '100%',
-                        color: '#1890ff',
-                        backgroundColor: '#cccc',
-                        borderColor: '#cccc',
-                    }}
-                    type="primary"
-                    onClick={addNewRow}
-            >
-                <AppstoreAddOutlined/> Add new product
-                </Button>
-            </div>
-        </>
-    )
-}
+  return (
+    <EditTableWithAddButton
+      columns={columns}
+      dataSource={products}
+      pagination={false}
+      onSave={({ key, data, method }) => save({ key, data, method })}
+      onDelete={(key) => remove(key)}
+    />
+  );
+};
 
-export default ProductRefactors
+export default ProductRefactors;
