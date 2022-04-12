@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import {Form,Input,Popconfirm,Typography,Space,Button,message,InputNumber,Select,Row,Divider} from 'antd';
-import { AppstoreAddOutlined } from '@ant-design/icons';
-import EditTable from '../common/table/EditTable';
+import {
+  Form,
+  Input,
+  Popconfirm,
+  Typography,
+  Space,
+  Button,
+  message,
+  InputNumber,
+  Select,
+  Row,
+  Divider,
+} from 'antd';
+import EditTableWithAddButton from '../common/table/EditTableWithAddButton';
 import { getAllProducts } from '../api/ProductApi';
 import { getAllCustomers } from '../api/CustomerApi';
 import CustomerInfo from '../order/CustomerInfo';
@@ -14,17 +25,11 @@ import validateMessages from '../common/form/ValidateMessages';
 
 const AddOrderRefactor = () => {
   const [form] = Form.useForm();
-
   const [products, setProducts] = useState(null);
-
   const [customers, setCustomers] = useState(null);
-
   const [customer, setCustomer] = useState(null);
-
   const [totalCostOrder, setTotalCostOrder] = useState(0);
-
   const [productsOfOrder, setProductsOfOrder] = useState([]);
-
   const { id } = useParams();
 
   useEffect(() => {
@@ -62,27 +67,53 @@ const AddOrderRefactor = () => {
     );
   }, []);
 
-  const remove = (key) => {
-      setProductsOfOrder([...productsOfOrder].filter((item) => item.key !== key))
-  };
+  // const remove = (key) => {
+  //   setProductsOfOrder([...productsOfOrder].filter((item) => item.key !== key));
+  // };
 
-  const updateDataProductsOfOrder = (key) => {
-    const {productId, quantity} = form.getFieldValue(key)
-    const productFireBase =  products.find((product) => product.key === productId)
-    const copyProductsOrder = [...productsOfOrder]
-    const indexProductOrder = productsOfOrder.findIndex((product) => product.key === key)
-    const productOrderUpdate = {
+  const updateDataProductsOfOrder = ({ key, value, field }) => {
+    const product = products.find((item) => item.key === value);
+    const copyProductsOrder = [...productsOfOrder];
+    const indexProductOrder = productsOfOrder.findIndex(
+      (product) => product.key === key
+    );
+    let productOrderUpdate = {
       ...[...productsOfOrder][indexProductOrder],
-      productId: productId,
-      quantity: quantity,
-      price: productFireBase.price,
-      total: quantity * productFireBase.price
-    }
-    copyProductsOrder[indexProductOrder] = productOrderUpdate
-    setProductsOfOrder(copyProductsOrder)
+      [`${field}`]: value,
+      price: product?.price,
+      total:
+        (productsOfOrder.quantity ? productsOfOrder.quantity : 1) *
+        product.price,
+    };
+    // if(field === "productId"){
+    //   const product = products.find((item) => item.key === value);
+    //   productOrderUpdate = {
+    //     ...[...productsOfOrder][indexProductOrder],
+    //     price: product?.price,
+    //     total: (productsOfOrder.quantity? productsOfOrder.quantity: 1) * product.price,
+    // }
+    // if(field === 'quantity'){
+    //   productOrderUpdate = {
+    //     ...[...productsOfOrder][indexProductOrder],
+    //     quantity: value,
+    // }
+    // const { productId, quantity } = form.getFieldValue(key);
+    // const productFireBase = products.find(
+    //   (product) => product.key === productId
+    // );
+
+    // const productOrderUpdate = {
+    //   ...[...productsOfOrder][indexProductOrder],
+    //   [`${field}`]: value,
+    //   productId: product.productId,
+    //   quantity: product.quantity,
+    //   price: product?.price,
+    //   total: productsOfOrder?.quantity * product?.price,
+    // };
+    console.log(productOrderUpdate);
+    copyProductsOrder[indexProductOrder] = productOrderUpdate;
+    // setProductsOfOrder(copyProductsOrder);
   };
-
-
 
   const columns = [
     {
@@ -124,6 +155,7 @@ const AddOrderRefactor = () => {
         min: 1,
       },
       formItemProps: {
+        initialValue: 1,
         rules: [
           {
             required: true,
@@ -155,11 +187,6 @@ const AddOrderRefactor = () => {
       },
     },
     {
-      title: 'Total',
-      editable: false,
-      render: (_, record) => <span>{record?.price * record?.quantity}</span>
-    },
-    {
       title: 'Notes',
       dataIndex: 'desc',
       inputType: Input,
@@ -173,42 +200,7 @@ const AddOrderRefactor = () => {
         width: '20%',
       },
     },
-    {
-      title: 'Action',
-      dataIndex: '',
-      key: '',
-      render: (_, record) => {
-        return (
-          <span>
-            <Space>
-              <Typography.Link onClick={() => remove(record.key)}>
-                Delete
-              </Typography.Link>
-            </Space>
-          </span>
-        );
-      },
-    },
   ];
-
-  const addNewProduct = () => {
-    const key = Date.now();
-    form.setFieldsValue({
-      [`${key}`]: {
-        quantity: 1,
-      },
-    });
-
-    const newItem = {
-      key: key,
-      productId: '',
-      quantity: 1,
-      price: 0,
-      total: 0,
-      desc: '',
-    };
-    setProductsOfOrder([...productsOfOrder, { ...newItem }]);
-  };
 
   const selectCustomer = (key) => {
     const customer = customers.find((customer) => customer.key === key);
@@ -218,24 +210,24 @@ const AddOrderRefactor = () => {
     });
   };
 
-  const checkoutOrder = () =>{
+  const checkoutOrder = () => {
     const dataSave = {
       customerId: customer.key,
       customerName: customer.name,
       delivery: form.getFieldValue('delivery'),
-      products: productsOfOrder.map((product) =>{
-        return{
-            productId: product.productId,
-            productName: products.find((item) => item.key === product.productId).name,
-            price: product.price,
-            quantity: product.quantity,
-            total: product.total,
-            desc: product.desc
-        }
-      })
-    }
-    console.log(dataSave)
-  }
+      products: productsOfOrder.map((product) => {
+        return {
+          productId: product.productId,
+          productName: products.find((item) => item.key === product.productId)
+            .name,
+          price: product.price,
+          quantity: product.quantity,
+          total: product.total,
+          desc: product.desc,
+        };
+      }),
+    };
+  };
 
   return (
     <div style={{ padding: 16 }}>
@@ -262,41 +254,28 @@ const AddOrderRefactor = () => {
             <Input />
           </Form.Item>
         </Row>
-        <Row>
-          <h4>Items: {productsOfOrder.length}</h4>
-          <Divider type="vertical" />
-          <h4>Total: {totalCostOrder}</h4>
-        </Row>
-        <EditTable
-          type = "multiple"
-          columns = {columns}
-          dataSource = {productsOfOrder}
-          form = {form}
-          pagination = {false}
-          onEdit ={(key) => updateDataProductsOfOrder(key)}
-        />
       </Form>
-      <div style={{ width: '100%' }}>
-        <Button
-          style={{
-            width: '100%',
-            color: '#1890ff',
-            backgroundColor: '#cccc',
-            borderColor: '#cccc',
-          }}
-          type="primary"
-          onClick={addNewProduct}
-        >
-          <AppstoreAddOutlined /> Add new record
-        </Button>
-      </div>
+      <Row>
+        <h4>Items: {productsOfOrder.length}</h4>
+        <Divider type="vertical" />
+        <h4>Total: {totalCostOrder}</h4>
+      </Row>
+      <EditTableWithAddButton
+        type="multiple"
+        columns={columns}
+        dataSource={productsOfOrder}
+        pagination={false}
+        onEdit={({ key, value, field }) =>
+          updateDataProductsOfOrder({ key, value, field })
+        }
+      />
       <div className="add-icon">
-          {productsOfOrder.length > 0 && (
-            <Button type="primary" onClick={checkoutOrder}>
-              Checkout
-            </Button>
-          )}
-        </div>
+        {productsOfOrder.length > 0 && (
+          <Button type="primary" onClick={checkoutOrder}>
+            Checkout
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

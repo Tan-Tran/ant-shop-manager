@@ -4,8 +4,16 @@ import AddNewRowButton from './Button/AddNewRowButton';
 import EditTable from './EditTableVersion2';
 
 const EditTableWithAddButton = (props) => {
-  const { columns, dataSource, pagination, onSave, onDelete, ...restProps } =
-    props;
+  const {
+    type,
+    columns,
+    dataSource,
+    pagination,
+    onSave,
+    onDelete,
+    onEdit,
+    ...restProps
+  } = props;
   const [data, setData] = useState(dataSource);
   const [isExistNewRow, setIsExistNewRow] = useState(false);
 
@@ -14,7 +22,7 @@ const EditTableWithAddButton = (props) => {
   }, [dataSource]);
 
   const addNewRow = () => {
-    if (isExistNewRow) {
+    if (!type && isExistNewRow) {
       message.warn('Please complete add new customer');
       return;
     }
@@ -23,7 +31,7 @@ const EditTableWithAddButton = (props) => {
       isNew: true,
     };
     for (const column of columns) {
-      newData[`${column.dataIndex}`] = column.defaultValue;
+      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
     }
     setData([...data, { ...newData }]);
     setIsExistNewRow(true);
@@ -32,12 +40,14 @@ const EditTableWithAddButton = (props) => {
   return (
     <>
       <EditTable
+        type={type}
         columns={columns}
         dataSource={data}
         pagination={pagination}
         onSave={({ key, data, method }) => onSave({ key, data, method })}
-        {...restProps}
         onDelete={(key) => onDelete(key)}
+        onEdit={({ key, value, field }) => onEdit({ key, value, field })}
+        {...restProps}
       />
       <AddNewRowButton addNewRow={addNewRow} />
     </>

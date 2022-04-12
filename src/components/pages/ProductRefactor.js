@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
 import EditTableWithAddButton from '../common/table/EditTableWithAddButton';
+import EditTable from '../common/table/EditTableVersion2';
+import AddNewRowButton from '../common/table/Button/AddNewRowButton';
 import {
   getAllProducts,
   updateProduct,
@@ -10,6 +12,7 @@ import {
 
 const ProductRefactors = () => {
   const [products, setProducts] = useState(null);
+  const [isExistNewRow, setIsExistNewRow] = useState(false);
 
   useEffect(() => {
     getAllProducts().then((data) =>
@@ -31,15 +34,16 @@ const ProductRefactors = () => {
   const save = async ({ key, data, method }) => {
     if (method === 'POST') {
       await addProduct(data)
-        .then((id) =>
+        .then((id) => {
           setProducts([
-            ...products,
+            ...products.filter((product) => product.key !== key),
             {
               ...data,
               key: id,
             },
-          ])
-        )
+          ]);
+          setIsExistNewRow(false);
+        })
         .then(() => message.success('Add product successfully'));
     }
     if (method === 'PUT') {
@@ -63,14 +67,35 @@ const ProductRefactors = () => {
       .then(() => message.success('Delete successful'));
   };
 
+  const addNewRow = () => {
+    if (isExistNewRow) {
+      message.warn('Please complete add new products');
+      return;
+    }
+    let newData = {
+      key: Date.now(),
+      isNew: true,
+    };
+    for (const column of columns) {
+      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
+    }
+    setProducts([...products, { ...newData }]);
+    setIsExistNewRow(true);
+  };
+
+  const onCancelAddNewRow = (key) => {
+    setProducts([...products].filter((product) => product.key !== key));
+    setIsExistNewRow(false);
+  };
+
   const columns = [
     {
       title: 'Name',
       dataIndex: 'name',
       editable: true,
       inputType: Input,
-      defaultValue: '',
       formItemProps: {
+        initialValue: '',
         rules: [
           {
             required: true,
@@ -89,12 +114,12 @@ const ProductRefactors = () => {
       title: 'Quantity',
       dataIndex: 'quantity',
       inputType: InputNumber,
-      defaultValue: 1,
       editable: true,
       elementProps: {
         min: 1,
       },
       formItemProps: {
+        initialValue: 1,
         rules: [
           {
             required: true,
@@ -114,11 +139,11 @@ const ProductRefactors = () => {
       dataIndex: 'price',
       editable: true,
       inputType: InputNumber,
-      defaultValue: 1,
       elementProps: {
         min: 1,
       },
       formItemProps: {
+        initialValue: 1,
         rules: [
           {
             required: true,
@@ -137,9 +162,9 @@ const ProductRefactors = () => {
       title: 'Origin',
       dataIndex: 'origin',
       inputType: Input,
-      defaultValue: '',
       editable: true,
       formItemProps: {
+        initialValue: '',
         rules: [
           {
             required: true,
@@ -158,9 +183,9 @@ const ProductRefactors = () => {
       title: 'Description',
       dataIndex: 'desc',
       inputType: Input,
-      defaultValue: '',
       editable: true,
       formItemProps: {
+        initialValue: '',
         style: {
           width: '50%',
         },
@@ -172,13 +197,17 @@ const ProductRefactors = () => {
   ];
 
   return (
-    <EditTableWithAddButton
-      columns={columns}
-      dataSource={products}
-      pagination={false}
-      onSave={({ key, data, method }) => save({ key, data, method })}
-      onDelete={(key) => remove(key)}
-    />
+    <>
+      <EditTable
+        columns={columns}
+        dataSource={products}
+        pagination={false}
+        onSave={({ key, data, method }) => save({ key, data, method })}
+        onDelete={(key) => remove(key)}
+        onCancel={(key) => onCancelAddNewRow(key)}
+      />
+      <AddNewRowButton addNewRow={addNewRow} />
+    </>
   );
 };
 

@@ -28,6 +28,8 @@ const EditTable = (props) => {
     onAdd,
     onUpdate,
     onDelete,
+    onEdit,
+    onCancel,
     ...restProps
   } = props;
 
@@ -77,13 +79,13 @@ const EditTable = (props) => {
     });
   };
 
-  const cancel = (record) => {
-    if (record.isNew) {
-      setDataSourceTable(
-        [...dataSourceTable].filter((item) => item.key !== record.key)
-      );
-    }
-  };
+  // const cancel = (record) => {
+  //   if (record.isNew) {
+  //     setDataSourceTable(
+  //       [...dataSourceTable].filter((item) => item.key !== record.key)
+  //     );
+  //   }
+  // };
 
   const columnsTable = [
     ...columns,
@@ -95,6 +97,16 @@ const EditTable = (props) => {
       },
       render: (_, record) => {
         const editable = checkEditing(type, record);
+        if (type) {
+          return (
+            <Typography.Link
+              disabled={editingKeys.length !== 0}
+              onClick={() => onDelete(record.key)}
+            >
+              Delete
+            </Typography.Link>
+          );
+        }
         return editable ? (
           <span>
             <Typography.Link
@@ -117,7 +129,7 @@ const EditTable = (props) => {
               title="Sure to cancel?"
               onConfirm={() => {
                 setEditingKeys([]);
-                cancel(record);
+                onCancel(record.key);
               }}
             >
               <a>Cancel</a>
@@ -160,6 +172,8 @@ const EditTable = (props) => {
         inputType: column.inputType,
         dataIndex: column.dataIndex,
         title: column.title,
+        form: form,
+        onEdit: onEdit,
         editing: checkEditing(type, record),
         formItemProps: column.formItemProps,
         elementProps: column.elementProps,

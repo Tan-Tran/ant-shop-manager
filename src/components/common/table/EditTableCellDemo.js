@@ -2,6 +2,7 @@ import React from 'react';
 import { Form } from 'antd';
 
 const EditableCell = ({
+  form,
   record,
   editable,
   inputType,
@@ -21,7 +22,11 @@ const EditableCell = ({
       <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
         <Element
           {...elementProps}
-          onChange={(value) => (onEdit ? onEdit(record.key) : '')}
+          onChange={(value) =>
+            onEdit
+              ? onEdit({ key: record.key, value: value, field: dataIndex })
+              : ''
+          }
         />
       </Form.Item>
     ) : (

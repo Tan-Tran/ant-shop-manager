@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, DatePicker, message } from 'antd';
+import EditTable from '../common/table/EditTableVersion2';
+import AddNewRowButton from '../common/table/Button/AddNewRowButton';
 import EditTableWithAddButton from '../common/table/EditTableWithAddButton';
 import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
 import {
@@ -11,9 +13,9 @@ import {
 import moment from 'moment';
 
 const CustomerRefactor = () => {
-
   const [customers, setCustomers] = useState(null);
-  
+  const [isExistNewRow, setIsExistNewRow] = useState(false);
+
   useEffect(() => {
     getAllCustomers().then((data) =>
       setCustomers(
@@ -37,7 +39,7 @@ const CustomerRefactor = () => {
       await addCustomer(data)
         .then((id) =>
           setCustomers([
-            ...customers,
+            ...customers.filter((customer) => customer.key !== key),
             {
               ...data,
               key: id,
@@ -77,8 +79,8 @@ const CustomerRefactor = () => {
       dataIndex: 'name',
       editable: true,
       inputType: Input,
-      defaultValue: '',
       formItemProps: {
+        initialValue: '',
         rules: [
           {
             required: true,
@@ -98,8 +100,8 @@ const CustomerRefactor = () => {
       dataIndex: 'address',
       editable: true,
       inputType: Input,
-      defaultValue: '',
       formItemProps: {
+        initialValue: '',
         rules: [
           {
             required: true,
@@ -118,13 +120,11 @@ const CustomerRefactor = () => {
       title: 'Date of birth',
       dataIndex: 'dateOfBirth',
       editable: true,
-      defaultValue: moment(new Date().toLocaleDateString('en-GB')).format(
-        FormatDate_DD_MM_YYY
-      ),
       elementProps: {
         format: FormatDate_DD_MM_YYY,
       },
       formItemProps: {
+        initialValue: '',
         rules: [
           {
             required: true,
@@ -145,8 +145,8 @@ const CustomerRefactor = () => {
       dataIndex: 'phone',
       editable: true,
       inputType: Input,
-      defaultValue: '',
       formItemProps: {
+        initialValue: '',
         rules: [
           {
             required: true,
@@ -163,14 +163,39 @@ const CustomerRefactor = () => {
     },
   ];
 
+  const addNewRow = () => {
+    if (isExistNewRow) {
+      message.warn('Please complete add new customer');
+      return;
+    }
+    let newData = {
+      key: Date.now(),
+      isNew: true,
+    };
+    for (const column of columns) {
+      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
+    }
+    setCustomers([...customers, { ...newData }]);
+    setIsExistNewRow(true);
+  };
+
+  const onCancelAddNewRow = (key) => {
+    setCustomers([...customers].filter((customer) => customer.key !== key));
+    setIsExistNewRow(false);
+  };
+
   return (
-    <EditTableWithAddButton
-      columns={columns}
-      dataSource={customers}
-      pagination={false}
-      onSave={({ key, data, method }) => save({ key, data, method })}
-      onDelete={(key) => remove(key)}
-    />
+    <>
+      <EditTable
+        columns={columns}
+        dataSource={customers}
+        pagination={false}
+        onSave={({ key, data, method }) => save({ key, data, method })}
+        onDelete={(key) => remove(key)}
+        onCancel={(key) => onCancelAddNewRow(key)}
+      />
+      <AddNewRowButton addNewRow={addNewRow} />
+    </>
   );
 };
 
