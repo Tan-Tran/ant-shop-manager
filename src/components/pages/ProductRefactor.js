@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
-import EditTableWithAddButton from '../common/table/EditTableWithAddButton';
 import EditTable from '../common/table/EditTableVersion2';
 import AddNewRowButton from '../common/table/Button/AddNewRowButton';
-import {
-  getAllProducts,
-  updateProduct,
-  addProduct,
-  deleteProduct,
-} from '../api/ProductApi';
+import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../api/ProductApi';
 
 const ProductRefactors = () => {
   const [products, setProducts] = useState(null);
@@ -83,8 +77,10 @@ const ProductRefactors = () => {
     setIsExistNewRow(true);
   };
 
-  const onCancelAddNewRow = (key) => {
-    setProducts([...products].filter((product) => product.key !== key));
+  const onCancel = (record) => {
+    if(record.isNew){
+        setProducts([...products].filter((product) => product.key !== record.key));
+    }
     setIsExistNewRow(false);
   };
 
@@ -204,7 +200,7 @@ const ProductRefactors = () => {
         pagination={false}
         onSave={({ key, data, method }) => save({ key, data, method })}
         onDelete={(key) => remove(key)}
-        onCancel={(key) => onCancelAddNewRow(key)}
+        onCancel={(record) => onCancel(record)}
       />
       <AddNewRowButton addNewRow={addNewRow} />
     </>

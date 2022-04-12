@@ -9,39 +9,36 @@ const covertDataTypeDatePicker = (data, columns) => {
     if (column.inputType === DatePicker) {
       return {
         ...data,
-        [`${column.dataIndex}`]: moment(
-          data[column.dataIndex],
-          FormatDate_DD_MM_YYY
-        ),
+        [`${column.dataIndex}`]: moment( data[column.dataIndex],FormatDate_DD_MM_YYY),
       };
     }
   }
 };
 
 const EditTable = (props) => {
-  const {
-    columns,
-    dataSource,
-    pagination,
-    type,
-    onSave,
-    onAdd,
-    onUpdate,
-    onDelete,
-    onEdit,
-    onCancel,
-    ...restProps
-  } = props;
-
+  const { columns, dataSource, pagination, type, 
+          onSave, onAdd,onUpdate,onDelete,onCancel,onChange,
+          ...restProps} = props;
   const [form] = Form.useForm();
-
   const [dataSourceTable, setDataSourceTable] = useState(dataSource);
-
   const [editingKeys, setEditingKeys] = useState([]);
 
   const isEditing = (record) => {
     return editingKeys.find((item) => item === record.key) ? true : false;
   };
+
+  const triggerOnChange = ({key, value, name}) =>{
+      const itemIndex = dataSource.findIndex((data) => data.key === key)
+      const copyDataSource = [...dataSourceTable]
+      copyDataSource[itemIndex] = {
+        ...copyDataSource[itemIndex],
+        [name]: value
+      }
+      setDataSourceTable(dataSourceTable)
+      onChange?.(
+          form.getFieldsValue()
+      )
+  }
 
   const checkEditing = (type, record) => {
     if (type === 'multiple') {
@@ -53,22 +50,26 @@ const EditTable = (props) => {
 
   useEffect(() => {
     setDataSourceTable(dataSource);
+    dataSource?.forEach((data) => {
+      if(data.isNew){
+        setEditingKeys([data.key])
+      }
+    })
   }, [dataSource]);
 
   useEffect(() => {
-    if (dataSource) {
-      if (type === 'multiple') {
-        for (const data of dataSource) {
-          form.setFieldsValue({
-            [`${data.key}`]: {
-              ...data,
-              ...covertDataTypeDatePicker(data, columns),
-            },
-          });
-        }
+    if (dataSource && type === 'multiple') {
+      for (const data of dataSource) {
+        form.setFieldsValue({
+          [`${data.key}`]: {
+            ...data,
+            ...covertDataTypeDatePicker(data, columns),
+          },
+        });
       }
     }
   }, [dataSource]);
+
 
   const edit = (record) => {
     form.setFieldsValue({
@@ -78,14 +79,6 @@ const EditTable = (props) => {
       },
     });
   };
-
-  // const cancel = (record) => {
-  //   if (record.isNew) {
-  //     setDataSourceTable(
-  //       [...dataSourceTable].filter((item) => item.key !== record.key)
-  //     );
-  //   }
-  // };
 
   const columnsTable = [
     ...columns,
@@ -100,8 +93,7 @@ const EditTable = (props) => {
         if (type) {
           return (
             <Typography.Link
-              disabled={editingKeys.length !== 0}
-              onClick={() => onDelete(record.key)}
+              onClick={() => onCancel(record)}
             >
               Delete
             </Typography.Link>
@@ -129,7 +121,7 @@ const EditTable = (props) => {
               title="Sure to cancel?"
               onConfirm={() => {
                 setEditingKeys([]);
-                onCancel(record.key);
+                onCancel(record);
               }}
             >
               <a>Cancel</a>
@@ -172,8 +164,7 @@ const EditTable = (props) => {
         inputType: column.inputType,
         dataIndex: column.dataIndex,
         title: column.title,
-        form: form,
-        onEdit: onEdit,
+        triggerOnChange: triggerOnChange,
         editing: checkEditing(type, record),
         formItemProps: column.formItemProps,
         elementProps: column.elementProps,

@@ -2,14 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Input, DatePicker, message } from 'antd';
 import EditTable from '../common/table/EditTableVersion2';
 import AddNewRowButton from '../common/table/Button/AddNewRowButton';
-import EditTableWithAddButton from '../common/table/EditTableWithAddButton';
 import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
-import {
-  getAllCustomers,
-  updateCustomer,
-  addCustomer,
-  deleteCustomer,
-} from '../api/CustomerApi';
+import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer} from '../api/CustomerApi';
 import moment from 'moment';
 
 const CustomerRefactor = () => {
@@ -179,8 +173,10 @@ const CustomerRefactor = () => {
     setIsExistNewRow(true);
   };
 
-  const onCancelAddNewRow = (key) => {
-    setCustomers([...customers].filter((customer) => customer.key !== key));
+  const onCancel = (record) => {
+    if(record.isNew){
+      setCustomers([...customers].filter((customer) => customer.key !== record.key));
+    }
     setIsExistNewRow(false);
   };
 
@@ -192,7 +188,7 @@ const CustomerRefactor = () => {
         pagination={false}
         onSave={({ key, data, method }) => save({ key, data, method })}
         onDelete={(key) => remove(key)}
-        onCancel={(key) => onCancelAddNewRow(key)}
+        onCancel={(record) => onCancel(record)}
       />
       <AddNewRowButton addNewRow={addNewRow} />
     </>
