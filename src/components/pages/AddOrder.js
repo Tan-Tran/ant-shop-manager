@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {Form,Input,Button,InputNumber,Select,Row,Divider,message,} from 'antd';
 import EditTable from '../common/table/EditTable';
-import AddNewRowButton from '../common/table/Button/AddNewRowButton';
+import AddNewRowButton from '../common/table/button/AddNewRowButton';
 import { getAllProducts } from '../api/ProductApi';
 import { getAllCustomers } from '../api/CustomerApi';
 import CustomerInfo from '../order/CustomerInfo';
@@ -78,25 +78,31 @@ const AddOrderRefactor = () => {
             };
           })
         );
+        setTotalCostOrder(
+          data['products'].reduce((prev, current) => prev + current.total, 0)
+        );
       });
     }
   }, [id, customers, products]);
 
-  const validatorTable = () => {
-    const allProductsOfOrder = form.getFieldValue('editable');
-    if (!allProductsOfOrder) {
+  const validatorProductsOrderTable = (data) => {
+    const products = data.productsOfOrder
+    if(!products){
       return Promise.reject(new Error('Product must be required!'));
     }
-    const keys = Object.keys(allProductsOfOrder);
+    const keys = Object.keys(products);
     let productIdsSet = new Set();
     for (const key of keys) {
-      const record = allProductsOfOrder[key];
+      const record = products[key];
       productIdsSet.add(record.productId);
       if (!record.productId) {
         return Promise.reject(new Error('Product must be required!'));
       }
     }
     if (productIdsSet.size !== keys.length) {
+      return Promise.reject(new Error('Duplicate product!'));
+    }
+    if(productIdsSet.length !== products.length){
       return Promise.reject(new Error('Duplicate product!'));
     }
     return Promise.resolve();
@@ -128,9 +134,7 @@ const AddOrderRefactor = () => {
           width: '100%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '200px'
     },
     {
       title: 'Quantity',
@@ -151,9 +155,7 @@ const AddOrderRefactor = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '400px'
     },
     {
       title: 'Price',
@@ -167,9 +169,7 @@ const AddOrderRefactor = () => {
       title: 'Total',
       dataIndex: 'total',
       editable: false,
-      style: {
-        width: '20%',
-      },
+      width: '200px'
     },
     {
       title: 'Notes',
@@ -181,9 +181,7 @@ const AddOrderRefactor = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '200px'
     },
   ];
 
@@ -238,7 +236,7 @@ const AddOrderRefactor = () => {
       }),
     };
     if (!id) {
-      await addOrder(dataSave);
+      await addOrder(dataSave).then(() => message.success("Complete add new order"));
     } else {
       await updateOrder(id, dataSave).then(() =>
         message.success('Update order successfully')
@@ -247,8 +245,8 @@ const AddOrderRefactor = () => {
     history.push('/order');
   };
 
-  const onChangeTable = async (allRecord) => {
-    validatorTable();
+  const onChangeProductsOrderTable = async (allRecord) => {
+    validatorProductsOrderTable({productsOfOrder: allRecord});
     const keys = Object.keys(allRecord);
     const copyProductsOrder = [...productsOfOrder];
     for (const key of keys) {
@@ -259,13 +257,8 @@ const AddOrderRefactor = () => {
         ...copyProductsOrder[productIndex],
         productId: productId,
         quantity: record.quantity,
-        price: productId
-          ? products.find((item) => item.key === productId).price
-          : 0,
-        total: productId
-          ? record.quantity *
-            products.find((item) => item.key === productId).price
-          : 0,
+        price: productId? products.find((item) => item.key === productId).price: 0,
+        total: productId? record.quantity *products.find((item) => item.key === productId).price: 0,
         desc: record.desc,
       };
     }
@@ -305,14 +298,18 @@ const AddOrderRefactor = () => {
           <Divider type="vertical" />
           <h4>Total: {totalCostOrder}</h4>
         </Row>
-        <Form.Item name="editable" rules={[{ validator: validatorTable }]}>
+        <Form.Item name="productsOfOrder" rules={[
+          (form) => ({validator(){
+            return validatorProductsOrderTable(form.getFieldsValue())
+          }})
+        ]}>
           <EditTable
             type="multiple"
             columns={columns}
             dataSource={productsOfOrder}
             pagination={false}
             onCancel={(record) => onCancel(record)}
-            onChange={(record) => onChangeTable(record)}
+            onChange={(record) => onChangeProductsOrderTable(record)}
           />
         </Form.Item>
       </Form>

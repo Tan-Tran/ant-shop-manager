@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
 import EditTable from '../common/table/EditTable';
-import AddNewRowButton from '../common/table/Button/AddNewRowButton';
+import AddNewRowButton from '../common/table/button/AddNewRowButton';
 import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../api/ProductApi';
 
 const ProductRefactors = () => {
@@ -102,9 +102,7 @@ const ProductRefactors = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Quantity',
@@ -126,9 +124,7 @@ const ProductRefactors = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Price',
@@ -150,9 +146,7 @@ const ProductRefactors = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Origin',
@@ -171,9 +165,7 @@ const ProductRefactors = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Description',
@@ -186,9 +178,7 @@ const ProductRefactors = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
   ];
 

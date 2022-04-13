@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, DatePicker, message } from 'antd';
 import EditTable from '../common/table/EditTable';
-import AddNewRowButton from '../common/table/Button/AddNewRowButton';
+import AddNewRowButton from '../common/table/button/AddNewRowButton';
 import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
 import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer} from '../api/CustomerApi';
 import moment from 'moment';
@@ -85,9 +85,7 @@ const CustomerRefactor = () => {
           width: '50%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Address',
@@ -106,9 +104,7 @@ const CustomerRefactor = () => {
           width: '100%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Date of birth',
@@ -130,9 +126,7 @@ const CustomerRefactor = () => {
         },
       },
       inputType: DatePicker,
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
     {
       title: 'Phone',
@@ -151,9 +145,7 @@ const CustomerRefactor = () => {
           width: '100%',
         },
       },
-      style: {
-        width: '20%',
-      },
+      width: '20%'
     },
   ];
 

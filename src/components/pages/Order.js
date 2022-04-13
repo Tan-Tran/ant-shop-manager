@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Tag, message } from 'antd';
 import { DeleteOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import 'antd/dist/antd.css';
 import { useHistory } from 'react-router-dom';
 import Editable from '../common/table/EditTable';
 import { getAllOrders, deleteOrder } from '../api/OrderApi';
+import 'antd/dist/antd.css';
 
 const Order = () => {
   const history = useHistory();
