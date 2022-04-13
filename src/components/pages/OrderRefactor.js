@@ -1,57 +1,58 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Tag, } from 'antd';
-import { DeleteOutlined, PlusCircleOutlined,} from '@ant-design/icons';
+import { Button, Tag, message } from 'antd';
+import { DeleteOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
 import { useHistory } from 'react-router-dom';
-import EditableCell from '../common/table/EditTableCell';
-import { getAllOrders, getOrder } from '../adapters/FetchData';
-
+import Editable from '../common/table/EditTableVersion2';
+import { getAllOrders, deleteOrder } from '../api/OrderApi';
 
 const Order = () => {
   const history = useHistory();
   const [orders, setOrders] = useState([]);
-  const [ordersData, setOrdersData] = useState([]);
 
   useEffect(() => {
     getAllOrders().then((data) =>
-        setOrders(
+      setOrders(
         Object.keys(data).map((key) => {
           return {
             key: key,
             customerId: data[key].customerId,
             customerName: data[key].customerName,
             delivery: data[key].delivery,
-            productNames: data[key].products.map((product) => {
-                return[]
-            }),
+            productNames: data[key].products.map(
+              (product) => product.productName
+            ),
+            total: data[key].products.reduce(
+              (prev, current) => prev + current.total,
+              0
+            ),
+            date: new Date(data[key].createAt).toLocaleDateString('en-US'),
           };
         })
       )
     );
   }, []);
 
-  const deleteOrder = async (key) =>{
-    const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${key}.json`
-    await deleteData(url)
-    setOrders(orders.filter((item) => item.key !== key))
-  }
+  const removeOrder = async (key) => {
+    deleteOrder(key)
+      .then(() => setOrders([...orders].filter((order) => order.key !== key)))
+      .then(() => message.success('Delete successful'));
+  };
 
   const columns = [
     {
       title: 'Customer',
       dataIndex: 'customerName',
-      key: 'customerName',
       editable: false,
       width: '200px',
     },
     {
       title: 'Product',
       dataIndex: 'productNames',
-      key: 'productNames',
       width: '600px',
-      render: (productNames) => (
+      render: (_, record) => (
         <>
-          {productNames.map((productName) => {
+          {record.productNames.map((productName) => {
             return (
               <Tag name="productName" color="geekblue" key={productName}>
                 {productName.toUpperCase()}
@@ -62,28 +63,30 @@ const Order = () => {
       ),
     },
     {
-        title: 'Delivery address',
-        dataIndex: 'delivery',
-        key: 'delivery',
-        editable: false,
-        width: '200px',
-    },
-    {
-      title: 'Date',
-      dataIndex: 'dateOrder',
-      key: 'dateOrder',
+      title: 'Delivery address',
+      dataIndex: 'delivery',
       editable: false,
       width: '200px',
     },
-    { title: 'Total', dataIndex: 'total', key: 'total', editable: false,  width: '200px', },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      editable: false,
+      width: '200px',
+    },
+    {
+      title: 'Total',
+      dataIndex: 'total',
+      editable: false,
+      width: '200px',
+    },
     {
       title: 'Action',
       dataIndex: '',
-      key: '',
-      render: (_, record) => {
+      render: (record) => {
         return (
           <Button danger>
-            <DeleteOutlined onClick={() => deleteOrder(record.key)}/>
+            <DeleteOutlined onClick={() => removeOrder(record.key)} />
           </Button>
         );
       },
@@ -92,24 +95,18 @@ const Order = () => {
 
   return (
     <>
-        <Table
-          pagination={false}
-          components={{
-            body: {
-              cell: EditableCell,
+      <Editable
+        columns={columns}
+        dataSource={orders}
+        pagination={false}
+        onRow={(record) => {
+          return {
+            onDoubleClick: () => {
+              history.push(`/order/${record.key}`);
             },
-          }}
-          onRow={(record) => {
-            return {
-              onDoubleClick: () => {
-                history.push(`/order/${record.key}`)
-              },
-            };
-          }}
-          className="components-table-demo-nested"
-          columns={customColumns}
-          dataSource={ordersData}
-        />
+          };
+        }}
+      />
       <div>
         <Button type="primary" onClick={() => history.push('/order/new')}>
           <PlusCircleOutlined /> Add new order

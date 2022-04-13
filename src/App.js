@@ -6,6 +6,7 @@ import CustomerRefactor from './components/pages/CustomerRefactor';
 import Product from './components/detail/Product';
 import ProductRefactors from './components/pages/ProductRefactor';
 import Order from './components/detail/Order';
+import OrderRefactor from './components/pages/OrderRefactor';
 
 import AddOrder from './components/pages/AddOrder';
 import AddOrderRefactor from './components/pages/AddOrderRefactor';
@@ -44,7 +45,7 @@ function App() {
                   </Route>
 
                   <Route path="/order" exact>
-                    <Order />
+                    <OrderRefactor />
                   </Route>
 
                   <Route path="/order/new">
@@ -52,7 +53,7 @@ function App() {
                   </Route>
 
                   <Route path="/order/:id">
-                    <AddOrder />
+                    <AddOrderRefactor />
                   </Route>
                 </Switch>
               </Content>
