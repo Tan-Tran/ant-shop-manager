@@ -1,21 +1,14 @@
-import './App.css';
-import ShopHeader from './components/common/Header';
-import ShopSidebar from './components/common/Sidebar';
-import Customer from './components/pages/Customer';
-import CustomerRefactor from './components/pages/CustomerRefactor';
-import Product from './components/detail/Product';
-import ProductRefactors from './components/pages/ProductRefactor';
-import Order from './components/detail/Order';
-import OrderRefactor from './components/pages/OrderRefactor';
-
-import AddOrder from './components/pages/AddOrder';
-import AddOrderRefactor from './components/pages/AddOrderRefactor';
-
-import 'antd/dist/antd.css';
-import { Layout } from 'antd';
-
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import React from 'react';
+import ShopHeader from './components/common/header/Header';
+import ShopSidebar from './components/common/sidebar/Sidebar';
+import Customer from './components/pages/Customer';
+import Product from './components/pages/Product';
+import Order from './components/pages/Order';
+import AddOrder from './components/pages/AddOrder';
+import { Layout } from 'antd';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import './App.css';
+import 'antd/dist/antd.css';
 
 const { Header, Content } = Layout;
 
@@ -33,27 +26,22 @@ function App() {
               <Content>
                 <Switch>
                   <Route path="/" exact>
-                    <CustomerRefactor />
+                    <Customer/>
                   </Route>
-
                   <Route path="/customer" exact>
-                    <CustomerRefactor />
+                    <Customer/>
                   </Route>
-
                   <Route path="/product" exact>
-                    <ProductRefactors />
+                    <Product/>
                   </Route>
-
                   <Route path="/order" exact>
-                    <OrderRefactor />
+                    <Order/>
                   </Route>
-
                   <Route path="/order/new">
-                    <AddOrderRefactor />
+                    <AddOrder/>
                   </Route>
-
                   <Route path="/order/:id">
-                    <AddOrderRefactor />
+                    <AddOrder/>
                   </Route>
                 </Switch>
               </Content>

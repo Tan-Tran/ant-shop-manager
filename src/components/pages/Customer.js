@@ -1,345 +1,198 @@
 import React, { useState, useEffect } from 'react';
-
-import {Table,Button,Space,DatePicker,Form,Input,InputNumber,message} from 'antd';
-
-import {DeleteOutlined,EditOutlined,UserAddOutlined,CheckOutlined,CloseOutlined, PlusCircleOutlined} from '@ant-design/icons';
-
+import { Input, DatePicker, message } from 'antd';
+import EditTable from '../common/table/EditTable';
+import AddNewRowButton from '../common/table/Button/AddNewRowButton';
+import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
+import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer} from '../api/CustomerApi';
 import moment from 'moment';
 
-import formatDate from '../format/formatDate';
-
-import { getData, deleteData } from '../adapters/FetchData';
-
-import {getCustomers, getCustomer, deleteCustomer} from '../api/CustomerApi'
-
-import {customerConvert} from '../adapters/DataConvert';
-
-import 'antd/dist/antd.css';
-
-const Customer = () => {
-
-  const [form] = Form.useForm();
-
-  const [customers, setCustomers] = useState([]);
-
-  const [editRowId, setEditRowId] = useState(null);
-
-  const [hasNewCustomerBefore, setHasNewCustomerBefore] = useState(false);
-
-  const [rowData, setRowData] = useState(null);
-
-  const fetchCustomers = async () => {
-    const url =
-      'https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json';
-    setCustomers(await getData(url, customerConvert));
-  };
+const CustomerRefactor = () => {
+  const [customers, setCustomers] = useState(null);
+  const [isExistNewRow, setIsExistNewRow] = useState(false);
 
   useEffect(() => {
-    fetchCustomers();
+    getAllCustomers().then((data) =>
+      setCustomers(
+        Object.keys(data).map((key) => {
+          return {
+            key: key,
+            name: data[key].name,
+            address: data[key].address,
+            dateOfBirth: moment(data[key].dateOfBirth).format(
+              FormatDate_DD_MM_YYY
+            ),
+            phone: data[key].phone,
+          };
+        })
+      )
+    );
   }, []);
 
-  const handleDelete = async (key) => {
-    await deleteData(
-      `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`
-    );
-    setCustomers(customers.filter((item) => item.key !== key));
+  const save = async ({ key, data, method }) => {
+    if (method === 'POST') {
+      await addCustomer(data)
+        .then((id) =>
+          setCustomers([
+            ...customers.filter((customer) => customer.key !== key),
+            {
+              ...data,
+              key: id,
+              dateOfBirth: moment(data.dateOfBirth).format(
+                FormatDate_DD_MM_YYY
+              ),
+            },
+          ])
+        )
+        .then(() => message.success('Add customer successfully'));
+    }
+    if (method === 'PUT') {
+      const newData = [...customers];
+      const index = customers.findIndex((item) => item.key === key);
+      newData[index] = {
+        ...data,
+        dateOfBirth: moment(data.dateOfBirth).format(FormatDate_DD_MM_YYY),
+      };
+      setCustomers(newData);
+      await updateCustomer(key, data).then(() =>
+        message.success('Update customer successfully')
+      );
+    }
+  };
+
+  const remove = (key) => {
+    deleteCustomer(key)
+      .then(() =>
+        setCustomers([...customers].filter((customer) => customer.key !== key))
+      )
+      .then(() => message.success('Delete successful'));
   };
 
   const columns = [
     {
       title: 'Name',
       dataIndex: 'name',
-      key: 'name',
-      width: '300px',
-      render: (text, record) => {
-        if (record.key === editRowId) {
-          return (
-            <Form.Item name="name" rules={[{ required: true }]}>
-              <Input style={{ width: 100 }} />
-            </Form.Item>
-          );
-        } else {
-          return <p>{text}</p>;
-        }
+      editable: true,
+      inputType: Input,
+      formItemProps: {
+        initialValue: '',
+        rules: [
+          {
+            required: true,
+            message: 'Name is required',
+          },
+        ],
+        style: {
+          width: '50%',
+        },
       },
-    },
-    {
-      title: 'Age',
-      dataIndex: 'age',
-      key: 'age',
-      width: '300px',
-      render: (text, record) => {
-        if (record.key === editRowId) {
-          return (
-            <Form.Item
-              name="age"
-              rules={[{ type: 'number', min: 1, required: true }]}
-            >
-              <InputNumber min={1} />
-            </Form.Item>
-          );
-        } else {
-          return <p>{text}</p>;
-        }
+      style: {
+        width: '20%',
       },
     },
     {
       title: 'Address',
       dataIndex: 'address',
-      key: 'address',
-      width: '300px',
-      render: (text, record) => {
-        if (record.key === editRowId) {
-          return (
-            <Form.Item name="address" rules={[{ required: true }]}>
-              <Input style={{ width: 100 }} />
-            </Form.Item>
-          );
-        } else {
-          return <p>{text}</p>;
-        }
+      editable: true,
+      inputType: Input,
+      formItemProps: {
+        initialValue: '',
+        rules: [
+          {
+            required: true,
+            message: 'Address is required',
+          },
+        ],
+        style: {
+          width: '100%',
+        },
+      },
+      style: {
+        width: '20%',
       },
     },
     {
       title: 'Date of birth',
       dataIndex: 'dateOfBirth',
-      key: 'dateOfBirth',
-      width: '300px',
-      render: (text, record) => {
-        if (record.key === editRowId) {
-          return (
-            <Form.Item name="birth" rules={[{ required: true }]}>
-              <DatePicker
-                format={formatDate}
-                disabledDate={(d) =>
-                  !d || d.isAfter(new Date().toLocaleDateString())
-                }
-              />
-            </Form.Item>
-          );
-        } else {
-          return <p>{text}</p>;
-        }
+      editable: true,
+      elementProps: {
+        format: FormatDate_DD_MM_YYY,
+      },
+      formItemProps: {
+        initialValue: '',
+        rules: [
+          {
+            required: true,
+            message: 'Date is required',
+          },
+        ],
+        style: {
+          width: '100%',
+        },
+      },
+      inputType: DatePicker,
+      style: {
+        width: '20%',
       },
     },
     {
       title: 'Phone',
       dataIndex: 'phone',
-      key: 'phone',
-      width: '300px',
-      render: (text, record) => {
-        if (record.key === editRowId) {
-          return (
-            <Form.Item name="phone" rules={[{ required: true }]}>
-              <Input style={{ width: 200 }} />
-            </Form.Item>
-          );
-        } else {
-          return <p>{text}</p>;
-        }
+      editable: true,
+      inputType: Input,
+      formItemProps: {
+        initialValue: '',
+        rules: [
+          {
+            required: true,
+            message: 'Phone is required',
+          },
+        ],
+        style: {
+          width: '100%',
+        },
       },
-    },
-    {
-      title: 'Action',
-      dataIndex: '',
-      key: '',
-      render: (record) => {
-        let editButton = '';
-        let updateButton = '';
-        let cancelButton = '';
-        if (record.new) {
-          return (
-            <Space>
-              <Button type="primary" htmlType="submit">
-                <UserAddOutlined />
-              </Button>
-              <Button danger onClick={() => cancelAddNewRow(record.key)}>
-                <CloseOutlined />
-              </Button>
-            </Space>
-          );
-        }
-        if (hasNewCustomerBefore) {
-          editButton = (
-            <Button type="primary" disabled>
-              <EditOutlined />
-            </Button>
-          );
-        } else {
-          editButton = (
-            <Button
-              type="primary"
-              onClick={() => {
-                setEditRowId(record.key);
-                setRowData(record);
-              }}
-            >
-              <EditOutlined />
-            </Button>
-          );
-        }
-        if (record.key === editRowId) {
-          editButton = '';
-          updateButton = (
-            <Button type="primary" htmlType="submit">
-              <CheckOutlined />
-            </Button>
-          );
-          cancelButton = (
-            <Button
-              danger
-              onClick={() => {
-                setEditRowId(null);
-              }}
-            >
-              <CloseOutlined />
-            </Button>
-          );
-        }
-        return (
-          <Space>
-            {editButton}
-            {updateButton}
-            {cancelButton}
-            <Button danger onClick={() => handleDelete(record.key)}>
-              <DeleteOutlined />
-            </Button>
-          </Space>
-        );
+      style: {
+        width: '20%',
       },
     },
   ];
 
-  useEffect(() => {
-    form.setFieldsValue({
-      name: rowData?.name,
-      age: rowData?.age,
-      address: rowData?.address,
-      birth: rowData?.dateOfBirth
-        ? moment(rowData.dateOfBirth, formatDate)
-        : moment(new Date().toLocaleDateString('en-GB'), formatDate),
-      phone: rowData?.phone,
-    });
-  }, [rowData]);
-
-  const submitHandler = (values) => {
-    if (editRowId === null) {
+  const addNewRow = () => {
+    if (isExistNewRow) {
+      message.warn('Please complete add new customer');
       return;
     }
-
-    const newRowData = {
-      name: values.name,
-      age: values.age,
-      address: values.address,
-      dateOfBirth: moment(values.birth).format(formatDate),
-      phone: values.phone,
+    let newData = {
+      key: Date.now(),
+      isNew: true,
     };
-
-    if (hasNewCustomerBefore) {
-      const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json`;
-      const addCustomer = async () => {
-        const response = await fetch(url, {
-          method: 'POST',
-          body: JSON.stringify(newRowData),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        setEditRowId(null);
-        const indexRowUpdate = customers.findIndex(
-          (item) => item.key === editRowId
-        );
-        const newCustomer = [...customers];
-        newCustomer[indexRowUpdate] = { ...newRowData, key: editRowId };
-        setCustomers(newCustomer);
-        setRowData(null);
-        message.success('Complete add new customer', 2);
-        setHasNewCustomerBefore(false);
-        fetchCustomers();
-      };
-      addCustomer();
-    } else {
-      const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${editRowId}.json`;
-      const updateRowData = async () => {
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newRowData),
-        });
-        setEditRowId(null);
-        const indexRowUpdate = customers.findIndex(
-          (item) => item.key === editRowId
-        );
-        const newCustomer = [...customers];
-        newCustomer[indexRowUpdate] = { ...newRowData, key: editRowId };
-        setCustomers(newCustomer);
-        setRowData(null);
-        message.success('Update complete', 2);
-        setHasNewCustomerBefore(false);
-      };
-      updateRowData();
+    for (const column of columns) {
+      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
     }
+    setCustomers([...customers, { ...newData }]);
+    setIsExistNewRow(true);
   };
 
-  const addNewRowHandler = () => {
-
-    const key = Date.now();
-
-    if (hasNewCustomerBefore) {
-      return message.warning('Please complete add a current customer!', 2);
+  const onCancel = (record) => {
+    if(record.isNew){
+      setCustomers([...customers].filter((customer) => customer.key !== record.key));
     }
-    
-    form.setFieldsValue({
-      name: '',
-      age: 1,
-      address: '',
-      phone: '',
-      birth: moment(new Date().toLocaleDateString('en-GB'), formatDate),
-    });
-    
-    const newCustomer = {
-      key: key,
-      name: '',
-      age: 1,
-      address: '',
-      phone: '',
-      new: true,
-    };
-
-    setEditRowId(key);
-    setCustomers([...customers, { ...newCustomer }]);
-    setHasNewCustomerBefore(true);
-  };
-
-  const cancelAddNewRow = (key) => {
-    const customersAfterRemoveEmptyRow = customers.filter((customer) => customer.key !== key);
-    setCustomers(customersAfterRemoveEmptyRow);
-    setHasNewCustomerBefore(false);
+    setIsExistNewRow(false);
   };
 
   return (
     <>
-      <Form form={form} onFinish={submitHandler}>
-        <Table dataSource={customers} bordered columns={columns} pagination={false}/>
-      </Form>
-      <div style={{ width: '100%' }}>
-          <Button
-            style={{
-              width: '100%',
-              color: '#1890ff',
-              backgroundColor: '#cccc',
-              borderColor: '#cccc',
-            }}
-            type="primary"
-            onClick={addNewRowHandler}
-          >
-             <PlusCircleOutlined /> Add new customer
-          </Button>
-        </div>
+      <EditTable
+        columns={columns}
+        dataSource={customers}
+        pagination={false}
+        onSave={({ key, data, method }) => save({ key, data, method })}
+        onDelete={(key) => remove(key)}
+        onCancel={(record) => onCancel(record)}
+      />
+      <AddNewRowButton addNewRow={addNewRow} />
     </>
   );
 };
 
-export default Customer;
+export default CustomerRefactor;

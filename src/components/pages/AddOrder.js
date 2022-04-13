@@ -1,303 +1,289 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { useState, useEffect } from 'react';
+import {Form,Input,Button,InputNumber,Select,Row,Divider,message,} from 'antd';
+import EditTable from '../common/table/EditTable';
+import AddNewRowButton from '../common/table/Button/AddNewRowButton';
+import { getAllProducts } from '../api/ProductApi';
+import { getAllCustomers } from '../api/CustomerApi';
+import CustomerInfo from '../order/CustomerInfo';
+import SelectCustomer from '../order/SelectCustomer';
+import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
+import moment from 'moment';
 import { useHistory, useParams } from 'react-router-dom';
-
-import {
-  Form,
-  Button,
-  Row,
-  Col,
-  Table,
-  Card,
-  Space,
-  message,
-  Divider,
-  Input,
-} from 'antd';
-
-import { AppstoreAddOutlined, DeleteOutlined } from '@ant-design/icons';
-
 import validateMessages from '../common/form/ValidateMessages';
+import { getOrder, addOrder, updateOrder } from '../api/OrderApi';
 
-import {
-  productConvert,
-  customerConvert,
-} from '../adapters/DataConvert';
-
-
-import { getData } from '../adapters/FetchData';
-
-import EditableCell from '../common/table/EditTableCell';
-import InputType from '../common/table/InputType';
-import SelectCustomer from '../common/form/SelectCustomer';
-
-const AddOrderTable = () => {
-
-  const [form] = Form.useForm();
-
-  const [order, setOrder] = useState(null)
-
-  const [products, setProducts] = useState([]);
-
-  const [customers, setCustomers] = useState([]);
-
-  const [customer, setCustomer] = useState({});
-
-  const [total, setTotal] = useState(0);
-
-  const [tempItems, setTempItems] = useState([]);
-
+const AddOrderRefactor = () => {
   const history = useHistory();
-
-  const {id} = useParams();
-
-  const fetchProducts = async () => {
-    const url =
-      'https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json';
-    setProducts(await getData(url, productConvert));
-  };
-
-  const fetchCustomers = async () => {
-    const url =
-      'https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json';
-    setCustomers(await getData(url, customerConvert));
-  };
-
-  const fetchOrderByOrderId = async (orderId) => {
-    const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${orderId}.json`;
-    setOrder(await getData(url, null));
-  }
+  const [form] = Form.useForm();
+  const [products, setProducts] = useState(null);
+  const [customers, setCustomers] = useState(null);
+  const [customer, setCustomer] = useState(null);
+  const [totalCostOrder, setTotalCostOrder] = useState(0);
+  const [productsOfOrder, setProductsOfOrder] = useState([]);
+  const { id } = useParams();
 
   useEffect(() => {
-    fetchProducts();
-    fetchCustomers();
-  },[]);
+    getAllProducts().then((data) =>
+      setProducts(
+        Object.keys(data).map((key) => {
+          return {
+            key: key,
+            name: data[key].name,
+            price: data[key].price,
+            quantity: data[key].quantity,
+            desc: data[key].desc,
+            origin: data[key].origin,
+          };
+        })
+      )
+    );
+  }, []);
 
   useEffect(() => {
-    fetchOrderByOrderId(id)
-  },[id])
+    getAllCustomers().then((data) =>
+      setCustomers(
+        Object.keys(data).map((key) => {
+          return {
+            key: key,
+            name: data[key].name,
+            address: data[key].address,
+            dateOfBirth: moment(data[key].dateOfBirth).format(
+              FormatDate_DD_MM_YYY
+            ),
+            phone: data[key].phone,
+          };
+        })
+      )
+    );
+  }, []);
 
   useEffect(() => {
-    if(id && customers.length !== 0 && products.length !== 0 && order){
-      const customerOrder = customers.find((item) => item.key === order.customerId)
-      const deliveryAddress = order.delivery
-      const productsOfOrder = order.products.map((product) =>{
-        return{
-          key: product.key,
-          product: product.name,
-          productId: product.key,
-          quantity: product.quantity,
-          price: product.price,
-          total: product.total,
-          desc: product.desc,
-          isEdit: true,
-        }
-      })
-      setCustomer(customerOrder)
-      setTempItems(productsOfOrder)
-      for(const product of productsOfOrder){
+    if (id && customers && products) {
+      getOrder(id).then((data) => {
         form.setFieldsValue({
-          [`${product.key}`]: {
-            product: product.key,
-            desc: product.desc,
-            quantity: product.quantity
-          },
-          customer: customerOrder.key
+          delivery: data['delivery'],
         });
-      }
-      let total = productsOfOrder.reduce(( previousValue, currentValue ) => previousValue + currentValue.total,0)
-      setTotal(total);
-      form.setFieldsValue({
-        delivery: deliveryAddress
-      })
-    }
-  },[id, customer, order, products])
-
-  const checkDuplicate = (value) => {
-    return tempItems.filter((item) => item.productId === value).length > 1;
-  };
-
-  const removeCurrentProduct = (key) => {
-    let newItems = [...tempItems].filter((item) => item.key !== key);
-    let total = 0;
-    for (const item of newItems) {
-      total = total + item.total;
-    }
-    form.validateFields();
-    setTotal(total);
-    setTempItems(newItems);
-  };
-
-  const selectCustomerHandler = (values) => {
-    const currentCustomer = customers.find((item) => item.key === values);
-    setCustomer(currentCustomer);
-    form.setFieldsValue({
-      customer: currentCustomer.key,
-      delivery: currentCustomer.address
-    })
-  };
-
-  const addNewItems = () => {
-    const key = Date.now();
-    form.setFieldsValue({
-      [`${key}`]: {
-        quantity: 1,
-        desc: 'No desc',
-      },
-    });
-
-    const newItem = {
-      key: key,
-      product: '',
-      productId: '',
-      quantity: 1,
-      price: 0,
-      total: 0,
-      desc: '',
-      isEdit: true,
-    };
-    setTempItems([...tempItems, { ...newItem }]);
-  };
-
-  const getDataHandler = (data) => {
-    const key = data.key;
-    const dataUpdate = form.getFieldValue(key);
-    const copyItems = [...tempItems];
-    const indexItemNeedUpdate = copyItems.findIndex((item) => item.key === key);
-    const product = products.find((item) => item.key === dataUpdate.product);
-    const newTempItems = {
-      ...copyItems[indexItemNeedUpdate],
-      product: product.name,
-      productId: dataUpdate.product,
-      price: product.price,
-      quantity: dataUpdate.quantity,
-      total: product.price * dataUpdate.quantity,
-      desc: dataUpdate.desc,
-    };
-    copyItems[indexItemNeedUpdate] = newTempItems;
-    let total = copyItems.reduce(( previousValue, currentValue ) => previousValue + currentValue.total,0)
-    setTotal(total);
-    setTempItems(copyItems);
-    
-  };
-
-  const checkoutOrder = async () => {
-    
-    try {
-      await form.validateFields();
-      const listProducts = tempItems.map((item) => {
-        return {
-          key: item.productId,
-          price: item.price,
-          desc: item.desc,
-          total: item.total,
-          quantity: item.quantity,
-          name: item.product,
-          isEdit: item.isEdit
-        };
+        setCustomer(
+          customers.find((customer) => customer.key == data['customerId'])
+        );
+        setProductsOfOrder(
+          data['products'].map((product) => {
+            return {
+              key: product.productId,
+              productId: product.productId,
+              quantity: product.quantity,
+              price: product.price,
+              total: product.total,
+              desc: product.desc,
+            };
+          })
+        );
       });
-      const orderData = {
-        customerId: customer.key,
-        products: listProducts,
-        dateOrder: new Date(),
-        delivery: form.getFieldValue("delivery")
-      };
-      
-      if(id){
-        const url = `https://shop-management-aba6f-default-rtdb.firebaseio.com/orders/${id}.json`;
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData),
-        });
-        message.success('Update order completed');
-      }else{
-        const url = 'https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json';
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData),
-        });
-        message.success('Add order completed');
-      }
-      history.push('/order');
-    } catch (error) {
-      console.log('Checkout error');
     }
+  }, [id, customers, products]);
+
+  const validatorTable = () => {
+    const allProductsOfOrder = form.getFieldValue('editable');
+    if (!allProductsOfOrder) {
+      return Promise.reject(new Error('Product must be required!'));
+    }
+    const keys = Object.keys(allProductsOfOrder);
+    let productIdsSet = new Set();
+    for (const key of keys) {
+      const record = allProductsOfOrder[key];
+      productIdsSet.add(record.productId);
+      if (!record.productId) {
+        return Promise.reject(new Error('Product must be required!'));
+      }
+    }
+    if (productIdsSet.size !== keys.length) {
+      return Promise.reject(new Error('Duplicate product!'));
+    }
+    return Promise.resolve();
   };
 
   const columns = [
-    { title: 'Product', dataIndex: 'product', key: 'product', editable: true, width: '300px',},
-    { title: 'Quantity', dataIndex: 'quantity', key: 'quantity', editable: true, width: '200px',},
-    { title: 'Price', dataIndex: 'price', key: 'price', editable: false, width: '200px',},
-    { title: 'Total', dataIndex: 'total', key: 'total',editable: false, width: '200px',},
-    { title: 'Notes', dataIndex: 'desc', key: 'desc', editable: true, width: '400px',},
     {
-      title: 'Action',
-      dataIndex: '',
-      key: '',
-      render: (record) => {
-        return (
-          <Space>
-            <Button danger onClick={() => removeCurrentProduct(record.key)}>
-              <DeleteOutlined />
-            </Button>
-          </Space>
-        );
+      title: 'Product',
+      dataIndex: 'productId',
+      editable: true,
+      inputType: Select,
+      elementProps: {
+        placeholder: 'Select product',
+        options: products?.map((product) => {
+          return {
+            label: product.name,
+            value: product.key,
+          };
+        }),
+      },
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: 'Product is required',
+          },
+        ],
+        style: {
+          width: '100%',
+        },
+      },
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Quantity',
+      dataIndex: 'quantity',
+      inputType: InputNumber,
+      editable: true,
+      elementProps: {
+        min: 1,
+      },
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            message: 'Quantity is required',
+          },
+        ],
+        style: {
+          width: '50%',
+        },
+      },
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      editable: false,
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Total',
+      dataIndex: 'total',
+      editable: false,
+      style: {
+        width: '20%',
+      },
+    },
+    {
+      title: 'Notes',
+      dataIndex: 'desc',
+      inputType: Input,
+      editable: true,
+      formItemProps: {
+        style: {
+          width: '50%',
+        },
+      },
+      style: {
+        width: '20%',
       },
     },
   ];
 
-  const columnsItems = columns.map((column) => {
-    if (!column.editable) {
-      return column;
-    }
-    return {
-      ...column,
-      onCell: (record) => ({
-        record,
-        inputType: InputType(column.dataIndex),
-        title: column.title,
-        dataIndex: column.dataIndex,
-        editable: column.editable,
-        editing: record.isEdit,
-        isDuplicate: checkDuplicate,
-        getData: getDataHandler,
-        dataSelect:
-          column.dataIndex === 'product' ? { product: products } : null,
+  const addNewRow = () => {
+    let newData = {
+      key: Date.now(),
+      productId: undefined,
+      quantity: 1,
+      price: 0,
+      total: 0,
+      desc: '',
+      isNew: true,
+    };
+    setProductsOfOrder([...productsOfOrder, { ...newData }]);
+  };
+
+  const selectCustomer = (key) => {
+    const customer = customers.find((customer) => customer.key === key);
+    setCustomer(customer);
+    form.setFieldsValue({
+      delivery: customer.address,
+    });
+  };
+
+  const onCancel = async (record) => {
+    const products = [...productsOfOrder].filter(
+      (item) => item.key !== record.key
+    );
+    setProductsOfOrder(products);
+    setTotalCostOrder(
+      products.reduce((prev, current) => prev + current.total, 0)
+    );
+  };
+
+  const checkoutOrder = async () => {
+    await form.validateFields();
+    const dataSave = {
+      customerId: customer.key,
+      customerName: customers.find((item) => item.key === customer.key).name,
+      delivery: form.getFieldValue('delivery'),
+      createAt: new Date(),
+      products: productsOfOrder.map((product) => {
+        return {
+          productId: product.productId,
+          productName: products.find((item) => item.key === product.productId)
+            .name,
+          price: product.price,
+          quantity: product.quantity,
+          total: product.total,
+          desc: product.desc,
+        };
       }),
     };
-  });
+    if (!id) {
+      await addOrder(dataSave);
+    } else {
+      await updateOrder(id, dataSave).then(() =>
+        message.success('Update order successfully')
+      );
+    }
+    history.push('/order');
+  };
+
+  const onChangeTable = async (allRecord) => {
+    validatorTable();
+    const keys = Object.keys(allRecord);
+    const copyProductsOrder = [...productsOfOrder];
+    for (const key of keys) {
+      const record = allRecord[key];
+      const productId = record.productId;
+      const productIndex = productsOfOrder.findIndex((item) => item.key == key);
+      copyProductsOrder[productIndex] = {
+        ...copyProductsOrder[productIndex],
+        productId: productId,
+        quantity: record.quantity,
+        price: productId
+          ? products.find((item) => item.key === productId).price
+          : 0,
+        total: productId
+          ? record.quantity *
+            products.find((item) => item.key === productId).price
+          : 0,
+        desc: record.desc,
+      };
+    }
+    setProductsOfOrder(copyProductsOrder);
+    setTotalCostOrder(
+      copyProductsOrder.reduce((prev, current) => prev + current.total, 0)
+    );
+  };
 
   return (
     <div style={{ padding: 16 }}>
-      <Form form={form} validateMessages={validateMessages} component={false}>
-        <Row>
-          <Col>
-           {!id && <Form.Item name="customer" rules={[{ required: true }]}>
-              <SelectCustomer
-                selectCustomerHandler={selectCustomerHandler}
-                customers={customers}
-                customer={customer}
-              />
-            </Form.Item>}
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <Card title="Customer Info" bordered={false} style={{ width: 300 }}>
-              <p>Name: {customer.name}</p>
-              <p>ID: {customer.key}</p>
-              <p>Phone: {customer.phone}</p>
-              <p>Birth: {customer.dateOfBirth}</p>
-              <p>Address: {customer.address}</p>
-            </Card>
-          </Col>
-        </Row>
+      <Form form={form} component={false} validateMessages={validateMessages}>
+        <SelectCustomer
+          id={id}
+          customers={customers}
+          onSelect={selectCustomer}
+        />
+        <CustomerInfo customer={customer} />
         <br />
         <Row>
           <Form.Item
@@ -307,54 +293,39 @@ const AddOrderTable = () => {
             rules={[
               {
                 required: true,
-                message: "Delivery is required.",
-    
-              }
+                message: 'Delivery is required.',
+              },
             ]}
           >
             <Input />
           </Form.Item>
         </Row>
         <Row>
-          <h4>Items: {tempItems.length}</h4>
+          <h4>Items: {productsOfOrder.length}</h4>
           <Divider type="vertical" />
-          <h4>Total: {total}</h4>
+          <h4>Total: {totalCostOrder}</h4>
         </Row>
-        <Table
-          className="table-add-order"
-          dataSource={tempItems}
-          pagination={false}
-          columns={columnsItems}
-          components={{
-            body: {
-              cell: EditableCell,
-            },
-          }}
-        ></Table>
-        <div style={{ width: '100%' }}>
-          <Button
-            style={{
-              width: '100%',
-              color: '#1890ff',
-              backgroundColor: '#cccc',
-              borderColor: '#cccc',
-            }}
-            type="primary"
-            onClick={addNewItems}
-          >
-            <AppstoreAddOutlined /> Add new record
-          </Button>
-        </div>
-        <div className="add-icon">
-          {tempItems.length > 0 && (
-            <Button type="primary" onClick={checkoutOrder}>
-              Checkout
-            </Button>
-          )}
-        </div>
+        <Form.Item name="editable" rules={[{ validator: validatorTable }]}>
+          <EditTable
+            type="multiple"
+            columns={columns}
+            dataSource={productsOfOrder}
+            pagination={false}
+            onCancel={(record) => onCancel(record)}
+            onChange={(record) => onChangeTable(record)}
+          />
+        </Form.Item>
       </Form>
+      <AddNewRowButton addNewRow={addNewRow} />
+      <div className="add-icon">
+        {productsOfOrder.length > 0 && (
+          <Button type="primary" htmlType="submit" onClick={checkoutOrder}>
+            Checkout
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
 
-export default AddOrderTable;
+export default AddOrderRefactor;

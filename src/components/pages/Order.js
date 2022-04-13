@@ -3,7 +3,7 @@ import { Button, Tag, message } from 'antd';
 import { DeleteOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import 'antd/dist/antd.css';
 import { useHistory } from 'react-router-dom';
-import Editable from '../common/table/EditTableVersion2';
+import Editable from '../common/table/EditTable';
 import { getAllOrders, deleteOrder } from '../api/OrderApi';
 
 const Order = () => {

@@ -1,110 +1,34 @@
 import React from 'react';
-
-import { Form, Input, InputNumber, Select, DatePicker } from 'antd';
-
-import formatDate from '../../format/formatDate';
-
-const { Option } = Select;
+import { Form } from 'antd';
 
 const EditableCell = ({
-  editing,
+  form,
+  record,
   editable,
+  inputType,
   dataIndex,
   title,
-  key,
-  inputType,
-  record,
-  index,
+  editing,
   children,
-  dataSelect,
-  getData,
-  isDuplicate,
+  formItemProps,
+  elementProps,
+  triggerOnChange,
   ...restProps
 }) => {
-  let inputNode = '';
-
-  switch (inputType) {
-    case 'number':
-      inputNode = (
-        <InputNumber
-          min={1}
-          onChange={(value) => getData({ dataIndex, value, key: record.key })}
-        />
-      );
-      break;
-    case 'text':
-      inputNode = (
-        <Input
-          onChange={(event) => getData({ dataIndex, event, key: record.key })}
-        />
-      );
-      break;
-    case 'select':
-      const data = dataSelect[dataIndex];
-      inputNode = (
-        <Select
-          placeholder="select item"
-          onChange={(value) => getData({ dataIndex, value, key: record.key })}
-        >
-          {data.map((item) => {
-            return (
-              <Option key={item.key} value={item.key}>
-                {item.name}
-              </Option>
-            );
-          })}
-        </Select>
-      );
-      break;
-    case 'date':
-      inputNode = (
-        <DatePicker format={formatDate}/>
-      )
-    default:
-      inputNode = (
-        <Input onChange={(event) => getData({ dataIndex, event, key })} />
-      );
-  }
-
   let childNode = children;
-
+  const Element = inputType;
   if (editable) {
     childNode = editing ? (
-      <Form.Item
-        style={{
-          margin: 0,
-          width: 150,
-        }}
-        name={[record.key, dataIndex]}
-        rules={[
-          {
-            required: true,
-            message: `${title} is required.`,
-
-          },
-          
-          ({getFieldValue}) => ({validator(){
-            if(inputType === "select" && isDuplicate(getFieldValue([record.key, dataIndex]))){
-              return Promise.reject(new Error("Duplicate item"))
-            }
-            return Promise.resolve()
-          }})
-        ]}
-      >
-        {inputNode}
+      <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
+        <Element
+          {...elementProps}
+          onChange={(value) => triggerOnChange({ key: record.key, value: value, name: dataIndex })}
+        />
       </Form.Item>
     ) : (
-      <div
-        className="editable-cell-value-wrap"
-        style={{
-          paddingRight: 24,
-        }}
-      >
-        {children}
-      </div>
+      <div>{children}</div>
     );
   }
-
   return <td {...restProps}>{childNode}</td>;
 };
 

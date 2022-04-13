@@ -1,7 +1,7 @@
 import React from "react"
 import './Header.css'
 
-import shop_icon from  '../images/shopping-cart.png'
+import shop_icon from  '../../images/shopping-cart.png'
 
 const AppHeader = props =>{
     return (

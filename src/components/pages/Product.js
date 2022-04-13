@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
-import EditTable from '../common/table/EditTableVersion2';
+import EditTable from '../common/table/EditTable';
 import AddNewRowButton from '../common/table/Button/AddNewRowButton';
 import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../api/ProductApi';
 
