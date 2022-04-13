@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import { AppstoreAddOutlined } from '@ant-design/icons';
 const AddNewRowButton = (props) => {
-  const { addNewRow, ...restProps } = props;
+  const { addNewRow, title, ...restProps } = props;
   return (
     <div style={{ width: '100%' }}>
       <Button
@@ -15,7 +15,7 @@ const AddNewRowButton = (props) => {
         onClick={addNewRow}
         {...restProps}
       >
-        <AppstoreAddOutlined /> Add new customer
+        <AppstoreAddOutlined /> {title}
       </Button>
     </div>
   );

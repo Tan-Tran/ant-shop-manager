@@ -14,13 +14,14 @@ import { getOrder, addOrder, updateOrder } from '../api/OrderApi';
 
 const AddOrderRefactor = () => {
   const history = useHistory();
-  const [form] = Form.useForm();
+  const [formOrderPage] = Form.useForm();
   const [products, setProducts] = useState(null);
   const [customers, setCustomers] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [totalCostOrder, setTotalCostOrder] = useState(0);
   const [productsOfOrder, setProductsOfOrder] = useState([]);
   const { id } = useParams();
+  const [formProductsOrderTable] = Form.useForm();
 
   useEffect(() => {
     getAllProducts().then((data) =>
@@ -60,7 +61,7 @@ const AddOrderRefactor = () => {
   useEffect(() => {
     if (id && customers && products) {
       getOrder(id).then((data) => {
-        form.setFieldsValue({
+        formOrderPage.setFieldsValue({
           delivery: data['delivery'],
         });
         setCustomer(
@@ -85,28 +86,11 @@ const AddOrderRefactor = () => {
     }
   }, [id, customers, products]);
 
-  const validatorProductsOrderTable = (data) => {
-    const products = data.productsOfOrder
-    if(!products){
-      return Promise.reject(new Error('Product must be required!'));
-    }
-    const keys = Object.keys(products);
-    let productIdsSet = new Set();
-    for (const key of keys) {
-      const record = products[key];
-      productIdsSet.add(record.productId);
-      if (!record.productId) {
-        return Promise.reject(new Error('Product must be required!'));
-      }
-    }
-    if (productIdsSet.size !== keys.length) {
-      return Promise.reject(new Error('Duplicate product!'));
-    }
-    if(productIdsSet.length !== products.length){
-      return Promise.reject(new Error('Duplicate product!'));
-    }
-    return Promise.resolve();
-  };
+  const checkDuplicate = (currentProductId, data) =>{
+    const recordKeys = Object.keys(data)
+    const productIds = recordKeys.map((key) => {return data[key]?.productId})
+    return productIds.filter((key) => key === currentProductId).length > 1? true: false
+  }
 
   const columns = [
     {
@@ -125,10 +109,15 @@ const AddOrderRefactor = () => {
       },
       formItemProps: {
         rules: [
-          {
-            required: true,
-            message: 'Product is required',
-          },
+          (form) => ({validator(_,value){
+            if(value === undefined) {
+              return Promise.reject(new Error('Product is required!'));
+            }
+            if(checkDuplicate(value, form.getFieldsValue())){
+              return Promise.reject(new Error('Product is duplicated!'));
+            }
+            return Promise.resolve()
+          }})
         ],
         style: {
           width: '100%',
@@ -201,7 +190,7 @@ const AddOrderRefactor = () => {
   const selectCustomer = (key) => {
     const customer = customers.find((customer) => customer.key === key);
     setCustomer(customer);
-    form.setFieldsValue({
+    formOrderPage.setFieldsValue({
       delivery: customer.address,
     });
   };
@@ -211,23 +200,21 @@ const AddOrderRefactor = () => {
       (item) => item.key !== record.key
     );
     setProductsOfOrder(products);
-    setTotalCostOrder(
-      products.reduce((prev, current) => prev + current.total, 0)
-    );
+    setTotalCostOrder(products.reduce((prev, current) => prev + current.total, 0));
   };
 
   const checkoutOrder = async () => {
-    await form.validateFields();
+    await formProductsOrderTable.validateFields()
+    await formOrderPage.validateFields();
     const dataSave = {
       customerId: customer.key,
       customerName: customers.find((item) => item.key === customer.key).name,
-      delivery: form.getFieldValue('delivery'),
+      delivery: formOrderPage.getFieldValue('delivery'),
       createAt: new Date(),
       products: productsOfOrder.map((product) => {
         return {
           productId: product.productId,
-          productName: products.find((item) => item.key === product.productId)
-            .name,
+          productName: products.find((item) => item.key === product.productId).name,
           price: product.price,
           quantity: product.quantity,
           total: product.total,
@@ -236,17 +223,19 @@ const AddOrderRefactor = () => {
       }),
     };
     if (!id) {
-      await addOrder(dataSave).then(() => message.success("Complete add new order"));
+      await addOrder(dataSave).
+        then(() => history.push('/order')).
+        then(() => message.success("Complete add new order"));
     } else {
-      await updateOrder(id, dataSave).then(() =>
-        message.success('Update order successfully')
-      );
+      await updateOrder(id, dataSave).
+        then(() => history.push('/order')).
+        then(() => message.success("Update order complete"))
+        ;
     }
-    history.push('/order');
   };
 
   const onChangeProductsOrderTable = async (allRecord) => {
-    validatorProductsOrderTable({productsOfOrder: allRecord});
+    await formProductsOrderTable.validateFields()
     const keys = Object.keys(allRecord);
     const copyProductsOrder = [...productsOfOrder];
     for (const key of keys) {
@@ -258,19 +247,17 @@ const AddOrderRefactor = () => {
         productId: productId,
         quantity: record.quantity,
         price: productId? products.find((item) => item.key === productId).price: 0,
-        total: productId? record.quantity *products.find((item) => item.key === productId).price: 0,
+        total: productId? record.quantity * products.find((item) => item.key === productId).price: 0,
         desc: record.desc,
       };
     }
     setProductsOfOrder(copyProductsOrder);
-    setTotalCostOrder(
-      copyProductsOrder.reduce((prev, current) => prev + current.total, 0)
-    );
+    setTotalCostOrder(copyProductsOrder.reduce((prev, current) => prev + current.total, 0));
   };
 
   return (
     <div style={{ padding: 16 }}>
-      <Form form={form} component={false} validateMessages={validateMessages}>
+      <Form form={formOrderPage} component={false} validateMessages={validateMessages}>
         <SelectCustomer
           id={id}
           customers={customers}
@@ -298,12 +285,9 @@ const AddOrderRefactor = () => {
           <Divider type="vertical" />
           <h4>Total: {totalCostOrder}</h4>
         </Row>
-        <Form.Item name="productsOfOrder" rules={[
-          (form) => ({validator(){
-            return validatorProductsOrderTable(form.getFieldsValue())
-          }})
-        ]}>
+        <Form.Item name="productsOfOrder">
           <EditTable
+            formOutside ={formOrderPage}
             type="multiple"
             columns={columns}
             dataSource={productsOfOrder}
@@ -313,13 +297,11 @@ const AddOrderRefactor = () => {
           />
         </Form.Item>
       </Form>
-      <AddNewRowButton addNewRow={addNewRow} />
+      <AddNewRowButton addNewRow={addNewRow} title={'Add new order'}/>
       <div className="add-icon">
-        {productsOfOrder.length > 0 && (
-          <Button type="primary" htmlType="submit" onClick={checkoutOrder}>
-            Checkout
-          </Button>
-        )}
+        <Button type="primary" htmlType="submit" onClick={checkoutOrder}>
+          Checkout
+        </Button>
       </div>
     </div>
   );

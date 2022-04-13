@@ -192,7 +192,7 @@ const ProductRefactors = () => {
         onDelete={(key) => remove(key)}
         onCancel={(record) => onCancel(record)}
       />
-      <AddNewRowButton addNewRow={addNewRow} />
+      <AddNewRowButton addNewRow={addNewRow} title={'Add new product'}/>
     </>
   );
 };

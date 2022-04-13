@@ -24,6 +24,7 @@ const isExistActionColumns = (columns) => {
 
 const EditTable = (props) => {
   const {
+    formOutside,
     columns,
     dataSource,
     pagination,
@@ -36,7 +37,11 @@ const EditTable = (props) => {
     onChange,
     ...restProps
   } = props;
-  const [form] = Form.useForm();
+
+  const [formInside] = Form.useForm();
+
+  const form = formOutside || formInside
+
   const [dataSourceTable, setDataSourceTable] = useState(dataSource);
   const [editingKeys, setEditingKeys] = useState([]);
 
@@ -111,7 +116,11 @@ const EditTable = (props) => {
           const editable = checkEditing(type, record);
           if (type) {
             return (
-              <Typography.Link onClick={() => onCancel(record)}>
+              <Typography.Link onClick={() => {
+                setDataSourceTable(dataSource.filter((data) => data.key !== record.key))
+                form.validateFields()
+                onCancel(record)
+              }}>
                 Delete
               </Typography.Link>
             );
@@ -136,7 +145,7 @@ const EditTable = (props) => {
               </Typography.Link>
               <Popconfirm
                 title="Sure to cancel?"
-                onConfirm={() => {
+                onConfirm={async () => {
                   setEditingKeys([]);
                   onCancel(record);
                 }}

@@ -3,6 +3,7 @@ import { Input, DatePicker, message } from 'antd';
 import EditTable from '../common/table/EditTable';
 import AddNewRowButton from '../common/table/button/AddNewRowButton';
 import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
+import DisableDate from '../format/date/DisableDate';
 import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer} from '../api/CustomerApi';
 import moment from 'moment';
 
@@ -112,6 +113,7 @@ const CustomerRefactor = () => {
       editable: true,
       elementProps: {
         format: FormatDate_DD_MM_YYY,
+        disabledDate: DisableDate,
       },
       formItemProps: {
         initialValue: '',
@@ -136,10 +138,16 @@ const CustomerRefactor = () => {
       formItemProps: {
         initialValue: '',
         rules: [
-          {
-            required: true,
-            message: 'Phone is required',
-          },
+          ({}) => ({validator(_,value){
+            const pattern = /^[0-9]+$/;
+            if(value === ''){
+              return Promise.reject(new Error('Phone must be require!'));
+            }
+            if(!pattern.test(value)){
+              return Promise.reject(new Error('Phone must be number!'));
+            }
+            return Promise.resolve()
+          }})
         ],
         style: {
           width: '100%',
@@ -182,7 +190,7 @@ const CustomerRefactor = () => {
         onDelete={(key) => remove(key)}
         onCancel={(record) => onCancel(record)}
       />
-      <AddNewRowButton addNewRow={addNewRow} />
+      <AddNewRowButton addNewRow={addNewRow} title={'Add new customer'}/>
     </>
   );
 };
