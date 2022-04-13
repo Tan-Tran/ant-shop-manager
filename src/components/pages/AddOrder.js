@@ -68,7 +68,7 @@ const AddOrderRefactor = () => {
           customers.find((customer) => customer.key == data['customerId'])
         );
         setProductsOfOrder(
-          data['products'].map((product) => {
+          data['products']? data['products'].map((product) => {
             return {
               key: product.productId,
               productId: product.productId,
@@ -77,10 +77,10 @@ const AddOrderRefactor = () => {
               total: product.total,
               desc: product.desc,
             };
-          })
+          }): []
         );
         setTotalCostOrder(
-          data['products'].reduce((prev, current) => prev + current.total, 0)
+          data['products']? data['products'].reduce((prev, current) => prev + current.total, 0): 0
         );
       });
     }
@@ -287,7 +287,7 @@ const AddOrderRefactor = () => {
         </Row>
         <Form.Item name="productsOfOrder">
           <EditTable
-            formOutside ={formOrderPage}
+            formOutside ={formProductsOrderTable}
             type="multiple"
             columns={columns}
             dataSource={productsOfOrder}

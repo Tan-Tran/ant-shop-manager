@@ -19,13 +19,13 @@ const Order = () => {
             customerId: data[key].customerId,
             customerName: data[key].customerName,
             delivery: data[key].delivery,
-            productNames: data[key].products.map(
+            productNames:  data[key].products? data[key].products.map(
               (product) => product.productName
-            ),
-            total: data[key].products.reduce(
+            ): [],
+            total: data[key].products? data[key].products.reduce(
               (prev, current) => prev + current.total,
               0
-            ),
+            ): 0,
             date: new Date(data[key].createAt).toLocaleDateString('en-US'),
           };
         })
@@ -52,7 +52,7 @@ const Order = () => {
       width: '600px',
       render: (_, record) => (
         <>
-          {record.productNames.map((productName) => {
+          {record.productNames?.map((productName) => {
             return (
               <Tag name="productName" color="geekblue" key={productName}>
                 {productName.toUpperCase()}
