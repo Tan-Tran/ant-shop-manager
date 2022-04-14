@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
 import EditTable from '../common/table/EditTableFinal';
-import { getAllProducts, updateProduct, addProduct, deleteProduct } from '../api/ProductApi';
+import {
+  getAllProducts,
+  updateProduct,
+  addProduct,
+  deleteProduct,
+} from '../api/ProductApi';
 
 const ProductRefactors = () => {
   const [products, setProducts] = useState([]);
@@ -10,17 +15,33 @@ const ProductRefactors = () => {
     getAllProducts().then(setProducts);
   }, []);
 
-  const onSave = (record) =>{
-    if(record.isNew){
-      addProduct(record).then(() => message.success("Add new product successful"))
-    }else{
-      updateProduct(record.key, record).then(() => message.success("Update product successful"))
+  const onSave = ({ isNew, data }) => {
+    if (isNew) {
+      addProduct(data).then((id) => {
+        setProducts([...products, { ...data, key: id }]);
+        message.success('Add new product successful');
+      });
+      return;
     }
-  }
+    const productIndex = products.findIndex(
+      (product) => product.key === data.key
+    );
+    const newProducts = [...products];
+    newProducts[productIndex] = {
+      ...data,
+    };
+    updateProduct(data).then(() => {
+      setProducts(newProducts);
+      message.success('Update product successful');
+    });
+  };
 
-  const onDelete = (key) =>{
-    deleteProduct(key).then(() => message.success("Delete product successful"))
-  }
+  const onDelete = (key) => {
+    deleteProduct(key).then(() => {
+      setProducts([...products].filter((product) => product.key !== key));
+      message.success('Delete product successful');
+    });
+  };
 
   const columns = [
     {
@@ -36,11 +57,8 @@ const ProductRefactors = () => {
             message: 'Name is required',
           },
         ],
-        style: {
-          width: '50%',
-        },
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Quantity',
@@ -58,11 +76,8 @@ const ProductRefactors = () => {
             message: 'Quantity is required',
           },
         ],
-        style: {
-          width: '50%',
-        },
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Price',
@@ -80,11 +95,8 @@ const ProductRefactors = () => {
             message: 'Price is required',
           },
         ],
-        style: {
-          width: '50%',
-        },
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Origin',
@@ -99,11 +111,8 @@ const ProductRefactors = () => {
             message: 'Origin is required',
           },
         ],
-        style: {
-          width: '50%',
-        },
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Description',
@@ -112,11 +121,8 @@ const ProductRefactors = () => {
       editable: true,
       formItemProps: {
         initialValue: '',
-        style: {
-          width: '50%',
-        },
       },
-      width: '20%'
+      width: '20%',
     },
   ];
 
@@ -126,7 +132,7 @@ const ProductRefactors = () => {
         columns={columns}
         dataSource={products}
         pagination={false}
-        onSave={(record) => onSave(record)}
+        onSave={({ isNew, data }) => onSave({ isNew, data })}
         onDelete={(key) => onDelete(key)}
       />
     </>

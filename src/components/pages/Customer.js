@@ -1,28 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { Input, DatePicker, message } from 'antd';
-import EditTable from '../common/table/EditTableFinal'
+import EditTable from '../common/table/EditTableFinal';
 import DisableDate from '../format/date/DisableDate';
-import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer} from '../api/CustomerApi';
+import {
+  getAllCustomers,
+  updateCustomer,
+  addCustomer,
+  deleteCustomer,
+} from '../api/CustomerApi';
 
 const Customer = () => {
-
   const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
-    getAllCustomers().then(setCustomers)
+    getAllCustomers().then(setCustomers);
   }, []);
 
-  const onSave = (record) =>{
-    if(record.isNew){
-      addCustomer(record).then(() => message.success("Add new customer successful"))
-    }else{
-      updateCustomer(record.key, record).then(() => message.success("Update customer successful"))
+  const onSave = ({ isNew, data }) => {
+    if (isNew) {
+      addCustomer(data).then((id) => {
+        console.log(id);
+        setCustomers([...customers, { ...data, key: id }]);
+        message.success('Add new customer successful');
+      });
+      return;
     }
-  }
+    const customerIndex = customers.findIndex(
+      (customer) => customer.key === data.key
+    );
+    const newCustomers = [...customers];
+    newCustomers[customerIndex] = {
+      ...data,
+    };
+    updateCustomer(data.key, data).then(() => {
+      setCustomers(newCustomers);
+      message.success('Update customer successful');
+    });
+  };
 
-  const onDelete = (key) =>{
-    deleteCustomer(key).then(() => message.success("Delete customer successful"))
-  }
+  const onDelete = (key) => {
+    deleteCustomer(key).then(() => {
+      setCustomers([...customers].filter((customer) => customer.key !== key));
+      message.success('Delete customer successful');
+    });
+  };
 
   const columns = [
     {
@@ -37,9 +58,9 @@ const Customer = () => {
             required: true,
             message: 'Name is required',
           },
-        ]
+        ],
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Address',
@@ -55,7 +76,7 @@ const Customer = () => {
           },
         ],
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Date of birth',
@@ -63,7 +84,7 @@ const Customer = () => {
       inputType: DatePicker,
       editable: true,
       elementProps: {
-        format: "DD/MM/YYYY",
+        format: 'DD/MM/YYYY',
         disabledDate: DisableDate,
       },
       formItemProps: {
@@ -75,7 +96,7 @@ const Customer = () => {
           },
         ],
       },
-      width: '20%'
+      width: '20%',
     },
     {
       title: 'Phone',
@@ -86,20 +107,20 @@ const Customer = () => {
         initialValue: '',
         rules: [
           {
-            validator(_,value){
+            validator(_, value) {
               const pattern = /^[0-9]+$/;
-              if(value === ''){
+              if (value === '') {
                 return Promise.reject(new Error('Phone must be require!'));
               }
-              if(!pattern.test(value)){
+              if (!pattern.test(value)) {
                 return Promise.reject(new Error('Phone must be number!'));
               }
-              return Promise.resolve()
-            }
-          }
+              return Promise.resolve();
+            },
+          },
         ],
       },
-      width: '20%'
+      width: '20%',
     },
   ];
 
@@ -109,7 +130,7 @@ const Customer = () => {
         columns={columns}
         dataSource={customers}
         pagination={false}
-        onSave={(record) => onSave(record)}
+        onSave={({ isNew, data }) => onSave({ isNew, data })}
         onDelete={(key) => onDelete(key)}
       />
     </>
