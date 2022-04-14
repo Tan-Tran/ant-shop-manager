@@ -1,7 +1,20 @@
+import callApi from "./callApi"
 
 export const getAllProducts = async() =>{
-    const response = await fetch('https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json')
-    const data = await response.json()
+    const response = await callApi('https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json')
+    let data = []
+    if(response){
+        data = Object.keys(response).map((key) => {
+            return {
+              key: key,
+              name: response[key].name,
+              price: response[key].price,
+              quantity: response[key].quantity,
+              desc: response[key].desc,
+              origin: response[key].origin,
+            };
+        })
+    }
     return data
 }
 
@@ -11,34 +24,28 @@ export const getProduct = async(key) =>{
     return data
 }
 
-export const addProduct = async(dataBody) =>{
-    const response = await fetch('https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json',{
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dataBody)
-    })
-    const data = await response.json()
-    const id = data.name
-    return id
+export const addProduct = async(data) =>{
+    const bodyData ={
+        name: data.name,
+        address: data.quantity,
+        price: data.price,
+        origin: data.origin,
+        desc: data.desc,
+    }
+    await callApi('https://shop-management-aba6f-default-rtdb.firebaseio.com/products.json', 'POST', bodyData)
 }
 
-export const updateProduct = async(key, dataBody) =>{
-    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`,{
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dataBody)
-    })
-    const data = await response.json()
-    const id = data.name
-    return id
+export const updateProduct = async(key, data) =>{
+    const bodyData ={
+        name: data.name,
+        address: data.quantity,
+        price: data.price,
+        origin: data.origin,
+        desc: data.desc,
+    }
+    await callApi(`https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`, 'PUT', bodyData)
 }
 
 export const deleteProduct = async(key) =>{
-    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`,{
-        method: 'DELETE',
-    })
+    await callApi(`https://shop-management-aba6f-default-rtdb.firebaseio.com/products/${key}.json`, 'DELETE')
 }

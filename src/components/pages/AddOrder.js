@@ -297,7 +297,6 @@ const AddOrderRefactor = () => {
           />
         </Form.Item>
       </Form>
-      <AddNewRowButton addNewRow={addNewRow} title={'Add new order'}/>
       <div className="add-icon">
         <Button type="primary" htmlType="submit" onClick={checkoutOrder}>
           Checkout

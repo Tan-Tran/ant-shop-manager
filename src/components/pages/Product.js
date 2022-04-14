@@ -1,88 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
-import EditTable from '../common/table/EditTable';
-import AddNewRowButton from '../common/table/button/AddNewRowButton';
-import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../api/ProductApi';
+import EditTable from '../common/table/EditTableFinal';
+import { getAllProducts, updateProduct, addProduct, deleteProduct } from '../api/ProductApi';
 
 const ProductRefactors = () => {
-  const [products, setProducts] = useState(null);
-  const [isExistNewRow, setIsExistNewRow] = useState(false);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    getAllProducts().then((data) =>
-      setProducts(
-        Object.keys(data).map((key) => {
-          return {
-            key: key,
-            name: data[key].name,
-            price: data[key].price,
-            quantity: data[key].quantity,
-            desc: data[key].desc,
-            origin: data[key].origin,
-          };
-        })
-      )
-    );
+    getAllProducts().then(setProducts);
   }, []);
 
-  const save = async ({ key, data, method }) => {
-    if (method === 'POST') {
-      await addProduct(data)
-        .then((id) => {
-          setProducts([
-            ...products.filter((product) => product.key !== key),
-            {
-              ...data,
-              key: id,
-            },
-          ]);
-          setIsExistNewRow(false);
-        })
-        .then(() => message.success('Add product successfully'));
-    }
-    if (method === 'PUT') {
-      const newData = [...products];
-      const index = products.findIndex((item) => item.key === key);
-      newData[index] = {
-        ...data,
-      };
-      setProducts(newData);
-      await updateProduct(key, data).then(() =>
-        message.success('Update product successfully')
-      );
-    }
-  };
-
-  const remove = (key) => {
-    deleteProduct(key)
-      .then(() =>
-        setProducts([...products].filter((product) => product.key !== key))
-      )
-      .then(() => message.success('Delete successful'));
-  };
-
-  const addNewRow = () => {
-    if (isExistNewRow) {
-      message.warn('Please complete add new products');
-      return;
-    }
-    let newData = {
-      key: Date.now(),
-      isNew: true,
-    };
-    for (const column of columns) {
-      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
-    }
-    setProducts([...products, { ...newData }]);
-    setIsExistNewRow(true);
-  };
-
-  const onCancel = (record) => {
+  const onSave = (record) =>{
     if(record.isNew){
-        setProducts([...products].filter((product) => product.key !== record.key));
+      addProduct(record).then(() => message.success("Add new product successful"))
+    }else{
+      updateProduct(record.key, record).then(() => message.success("Update product successful"))
     }
-    setIsExistNewRow(false);
-  };
+  }
+
+  const onDelete = (key) =>{
+    deleteProduct(key).then(() => message.success("Delete product successful"))
+  }
 
   const columns = [
     {
@@ -139,7 +77,7 @@ const ProductRefactors = () => {
         rules: [
           {
             required: true,
-            message: 'Quantity is required',
+            message: 'Price is required',
           },
         ],
         style: {
@@ -188,11 +126,9 @@ const ProductRefactors = () => {
         columns={columns}
         dataSource={products}
         pagination={false}
-        onSave={({ key, data, method }) => save({ key, data, method })}
-        onDelete={(key) => remove(key)}
-        onCancel={(record) => onCancel(record)}
+        onSave={(record) => onSave(record)}
+        onDelete={(key) => onDelete(key)}
       />
-      <AddNewRowButton addNewRow={addNewRow} title={'Add new product'}/>
     </>
   );
 };

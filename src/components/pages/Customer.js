@@ -1,72 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Input, DatePicker, message } from 'antd';
-import EditTable from '../common/table/EditTable';
-import AddNewRowButton from '../common/table/button/AddNewRowButton';
-import { FormatDate_DD_MM_YYY } from '../format/date/FormatDate';
+import EditTable from '../common/table/EditTableFinal'
 import DisableDate from '../format/date/DisableDate';
 import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer} from '../api/CustomerApi';
-import moment from 'moment';
 
-const CustomerRefactor = () => {
-  const [customers, setCustomers] = useState(null);
-  const [isExistNewRow, setIsExistNewRow] = useState(false);
+const Customer = () => {
+
+  const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
-    getAllCustomers().then((data) =>
-      setCustomers(
-        Object.keys(data).map((key) => {
-          return {
-            key: key,
-            name: data[key].name,
-            address: data[key].address,
-            dateOfBirth: moment(data[key].dateOfBirth).format(
-              FormatDate_DD_MM_YYY
-            ),
-            phone: data[key].phone,
-          };
-        })
-      )
-    );
+    getAllCustomers().then(setCustomers)
   }, []);
 
-  const save = async ({ key, data, method }) => {
-    if (method === 'POST') {
-      await addCustomer(data)
-        .then((id) =>
-          setCustomers([
-            ...customers.filter((customer) => customer.key !== key),
-            {
-              ...data,
-              key: id,
-              dateOfBirth: moment(data.dateOfBirth).format(
-                FormatDate_DD_MM_YYY
-              ),
-            },
-          ])
-        )
-        .then(() => message.success('Add customer successfully'));
+  const onSave = (record) =>{
+    if(record.isNew){
+      addCustomer(record).then(() => message.success("Add new customer successful"))
+    }else{
+      updateCustomer(record.key, record).then(() => message.success("Update customer successful"))
     }
-    if (method === 'PUT') {
-      const newData = [...customers];
-      const index = customers.findIndex((item) => item.key === key);
-      newData[index] = {
-        ...data,
-        dateOfBirth: moment(data.dateOfBirth).format(FormatDate_DD_MM_YYY),
-      };
-      setCustomers(newData);
-      await updateCustomer(key, data).then(() =>
-        message.success('Update customer successfully')
-      );
-    }
-  };
+  }
 
-  const remove = (key) => {
-    deleteCustomer(key)
-      .then(() =>
-        setCustomers([...customers].filter((customer) => customer.key !== key))
-      )
-      .then(() => message.success('Delete successful'));
-  };
+  const onDelete = (key) =>{
+    deleteCustomer(key).then(() => message.success("Delete customer successful"))
+  }
 
   const columns = [
     {
@@ -81,10 +37,7 @@ const CustomerRefactor = () => {
             required: true,
             message: 'Name is required',
           },
-        ],
-        style: {
-          width: '50%',
-        },
+        ]
       },
       width: '20%'
     },
@@ -101,18 +54,16 @@ const CustomerRefactor = () => {
             message: 'Address is required',
           },
         ],
-        style: {
-          width: '100%',
-        },
       },
       width: '20%'
     },
     {
       title: 'Date of birth',
       dataIndex: 'dateOfBirth',
+      inputType: DatePicker,
       editable: true,
       elementProps: {
-        format: FormatDate_DD_MM_YYY,
+        format: "DD/MM/YYYY",
         disabledDate: DisableDate,
       },
       formItemProps: {
@@ -123,11 +74,7 @@ const CustomerRefactor = () => {
             message: 'Date is required',
           },
         ],
-        style: {
-          width: '100%',
-        },
       },
-      inputType: DatePicker,
       width: '20%'
     },
     {
@@ -138,47 +85,23 @@ const CustomerRefactor = () => {
       formItemProps: {
         initialValue: '',
         rules: [
-          ({}) => ({validator(_,value){
-            const pattern = /^[0-9]+$/;
-            if(value === ''){
-              return Promise.reject(new Error('Phone must be require!'));
+          {
+            validator(_,value){
+              const pattern = /^[0-9]+$/;
+              if(value === ''){
+                return Promise.reject(new Error('Phone must be require!'));
+              }
+              if(!pattern.test(value)){
+                return Promise.reject(new Error('Phone must be number!'));
+              }
+              return Promise.resolve()
             }
-            if(!pattern.test(value)){
-              return Promise.reject(new Error('Phone must be number!'));
-            }
-            return Promise.resolve()
-          }})
+          }
         ],
-        style: {
-          width: '100%',
-        },
       },
       width: '20%'
     },
   ];
-
-  const addNewRow = () => {
-    if (isExistNewRow) {
-      message.warn('Please complete add new customer');
-      return;
-    }
-    let newData = {
-      key: Date.now(),
-      isNew: true,
-    };
-    for (const column of columns) {
-      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
-    }
-    setCustomers([...customers, { ...newData }]);
-    setIsExistNewRow(true);
-  };
-
-  const onCancel = (record) => {
-    if(record.isNew){
-      setCustomers([...customers].filter((customer) => customer.key !== record.key));
-    }
-    setIsExistNewRow(false);
-  };
 
   return (
     <>
@@ -186,13 +109,11 @@ const CustomerRefactor = () => {
         columns={columns}
         dataSource={customers}
         pagination={false}
-        onSave={({ key, data, method }) => save({ key, data, method })}
-        onDelete={(key) => remove(key)}
-        onCancel={(record) => onCancel(record)}
+        onSave={(record) => onSave(record)}
+        onDelete={(key) => onDelete(key)}
       />
-      <AddNewRowButton addNewRow={addNewRow} title={'Add new customer'}/>
     </>
   );
 };
 
-export default CustomerRefactor;
+export default Customer;

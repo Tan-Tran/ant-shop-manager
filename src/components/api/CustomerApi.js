@@ -1,44 +1,47 @@
+import callApi from './callApi'
 
 export const getAllCustomers = async() =>{
-    const response = await fetch('https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json')
-    const data = await response.json()
+    const response = await callApi('https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json')
+    let data = []
+    if(response){
+        data = Object.keys(response).map((key) => {
+            return {
+              key: key,
+              name: response[key].name,
+              address: response[key].address,
+              dateOfBirth: response[key].dateOfBirth,
+              phone: response[key].phone,
+            };
+          })
+    }
     return data
 }
 
 export const getCustomerById = async(key) =>{
-    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`)
-    const data = await response.json()
-    return data
+    const response = await callApi(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`)
+    return response
 }
 
-export const addCustomer = async(bodyData) =>{
-    const response = await fetch('https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json',{
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bodyData)
-    })
-    const data = await response.json()
-    const id = data.name
-    return id
+export const addCustomer = async(data) =>{
+    const bodyData ={
+        name: data.name,
+        address: data.address,
+        dateOfBirth: data.dateOfBirth,
+        phone: data.phone,
+    }
+    await callApi('https://shop-management-aba6f-default-rtdb.firebaseio.com/customers.json', 'POST', bodyData)
 }
 
-export const updateCustomer = async(key, bodyData) =>{
-    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`,{
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bodyData)
-    })
-    const data = await response.json()
-    const id = data.name
-    return id
+export const updateCustomer = async(key, data) =>{
+    const bodyData ={
+        name: data.name,
+        address: data.address,
+        dateOfBirth: data.dateOfBirth,
+        phone: data.phone,
+    }
+    await callApi(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`, 'PUT', bodyData)
 }
 
 export const deleteCustomer = async(key) =>{
-    const response = await fetch(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`,{
-        method: 'DELETE',
-    })
+    await callApi(`https://shop-management-aba6f-default-rtdb.firebaseio.com/customers/${key}.json`, 'DELETE')
 }

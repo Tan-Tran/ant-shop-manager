@@ -3,6 +3,7 @@ import EditableCell from './EditTableCell';
 import moment from 'moment';
 import { FormatDate_DD_MM_YYY } from '../../format/date/FormatDate';
 import { Table, Form, DatePicker, Popconfirm, Typography, Space } from 'antd';
+import AddNewRowButton from '../../common/table/button/AddNewRowButton';
 
 const covertDataTypeDatePicker = (data, columns) => {
   for (const column of columns) {
@@ -39,9 +40,7 @@ const EditTable = (props) => {
   } = props;
 
   const [formInside] = Form.useForm();
-
   const form = formOutside || formInside
-
   const [dataSourceTable, setDataSourceTable] = useState(dataSource);
   const [editingKeys, setEditingKeys] = useState([]);
 
@@ -199,20 +198,27 @@ const EditTable = (props) => {
     };
   });
 
+  const addNewRow = () => {
+
+  }
+
   return (
-    <Form form={form}>
-      <Table
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
-        columns={mergeColumns}
-        dataSource={dataSourceTable}
-        pagination={pagination}
-        {...restProps}
-      />
-    </Form>
+    <>
+      <Form form={form}>
+        <Table
+          components={{
+            body: {
+              cell: EditableCell,
+            },
+          }}
+          columns={mergeColumns}
+          dataSource={dataSourceTable}
+          pagination={pagination}
+          {...restProps}
+        />
+      </Form>
+      <AddNewRowButton addNewRow={addNewRow} title={'Add new customer'}/>
+    </>
   );
 };
 
