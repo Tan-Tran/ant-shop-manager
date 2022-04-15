@@ -1,4 +1,4 @@
-const callApi = async (url, method='GET', body) =>{
+const callFetchApi = async (url, method='GET', body) =>{
     const response = await fetch(url,{
         method: method,
         headers: {
@@ -9,4 +9,4 @@ const callApi = async (url, method='GET', body) =>{
     return response.json()
 }
 
-export default callApi
+export default callFetchApi

@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Table,
-  Form,
-  Popconfirm,
-  Typography,
-  Space,
-  DatePicker,
-  message,
-} from 'antd';
+import {Table,Form,Popconfirm,Typography,Space,DatePicker,message} from 'antd';
 import EditableCell from './EditTableCell';
-import AddNewRowButton from '../../common/table/button/AddNewRowButton';
+import AddNewRowButton from './button/AddNewRowButton';
 import moment from 'moment';
 import { FormatDate_DD_MM_YYY } from '../../format/date/FormatDate';
 
@@ -49,20 +41,9 @@ const isExistNewRow = (data) => {
 };
 
 const EditTable = (props) => {
-  const {
-    formOutside,
-    columns,
-    dataSource,
-    pagination,
-    type,
-    onSave,
-    onAdd,
-    onUpdate,
-    onDelete,
-    onCancel,
-    onChange,
-    showAddNewRow = true,
-    useDefaultActionColumn = true,
+  const { formOutside,columns,dataSource,pagination,type,
+          onSave,onAdd, onUpdate,onDelete,onCancel,
+          showAddNewRow = true,useActionColumnDefault = true,
     ...restProps
   } = props;
 
@@ -97,16 +78,13 @@ const EditTable = (props) => {
 
   const triggerOnChange = (recordKey) => {
     const data = form.getFieldValue(recordKey);
-    const dataIndex = dataSourceTable.findIndex(
-      (data) => data.key === recordKey
-    );
+    const dataIndex = dataSourceTable.findIndex((data) => data.key === recordKey);
     const newDataSource = [...dataSourceTable];
     newDataSource[dataIndex] = {
       ...newDataSource[dataIndex],
       ...convertData(data, columns),
     };
     setDataSourceTable(newDataSource);
-    onChange?.(form.getFieldsValue());
   };
 
   const cancel = (record) => {
@@ -128,10 +106,32 @@ const EditTable = (props) => {
     });
   };
 
-  const save = (record) => {
-    const { isNew, ...restRecord } = record;
-    onSave({ isNew, data: restRecord });
+  const save = async (record) => {
+    await form.validateFields()
+    const { isNew, key,...restRecord } = record;
+    onSave({ isNew, key, data: restRecord });
     setEditingKeys([]);
+  };
+
+  const remove = (record) => {
+    onDelete(record.key)
+  }
+
+  const addNewRow = () => {
+    if (!type && isExistNewRow(dataSourceTable)) {
+      message.warn('Please complete add current row');
+      return;
+    }
+    const key = Date.now();
+    let newData = {
+      key: key,
+      isNew: true,
+    };
+    for (const column of columns) {
+      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
+    }
+    setDataSourceTable([...dataSourceTable, { ...newData }]);
+    setEditingKeys([...editingKeys, key]);
   };
 
   const columnsDefault = [
@@ -148,10 +148,9 @@ const EditTable = (props) => {
           return (
             <Typography.Link
               onClick={() => {
-                setDataSourceTable(
-                  dataSource.filter((data) => data.key !== record.key)
-                );
+                setDataSourceTable(dataSource.filter((data) => data.key !== record.key));
                 cancel(record);
+                form.validateFields();
               }}
             >
               Delete
@@ -186,7 +185,7 @@ const EditTable = (props) => {
               </Typography.Link>
               <Typography.Link
                 disabled={editingKeys.length !== 0}
-                onClick={() => onDelete(record.key)}
+                onClick={() => remove(record.key)}
               >
                 Delete
               </Typography.Link>
@@ -197,25 +196,8 @@ const EditTable = (props) => {
     },
   ];
 
-  const addNewRow = () => {
-    if (!type && isExistNewRow(dataSourceTable)) {
-      message.warn('Please complete add current row');
-      return;
-    }
-    const key = Date.now();
-    let newData = {
-      key: key,
-      isNew: true,
-    };
-    for (const column of columns) {
-      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
-    }
-    setDataSourceTable([...dataSourceTable, { ...newData }]);
-    setEditingKeys([...editingKeys, key]);
-  };
-
   let columnsTable = columnsDefault;
-  if (!useDefaultActionColumn) {
+  if (!useActionColumnDefault) {
     columnsTable.pop();
   }
 

@@ -22,7 +22,7 @@ const EditableCell = ({
       <Form.Item name={[record.key, dataIndex]} {...formItemProps}>
         <Element
           {...elementProps}
-          onChange={(value) => onChange(record.key)}
+          onChange={() => onChange(record.key)}
         />
       </Form.Item>
     ) : (
