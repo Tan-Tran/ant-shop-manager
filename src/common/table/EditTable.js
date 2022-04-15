@@ -148,9 +148,8 @@ const EditTable = (props) => {
           return (
             <Typography.Link
               onClick={() => {
-                setDataSourceTable(dataSource.filter((data) => data.key !== record.key));
-                cancel(record);
-                form.validateFields();
+                setDataSourceTable(dataSourceTable.filter((data) => data.key !== record.key));
+                form.validateFields()
               }}
             >
               Delete

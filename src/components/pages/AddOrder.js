@@ -57,7 +57,6 @@ const AddOrderRefactor = () => {
 
   const validateProductsOrderTable = () =>{
     const data = formProductsOrderTable.getFieldsValue();
-    console.log(data)
     if(Object.keys(data).length === 0){
       return Promise.reject(new Error("Product is required"))
     }
