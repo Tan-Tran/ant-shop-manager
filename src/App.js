@@ -1,10 +1,10 @@
 import React from 'react';
-import ShopHeader from './common/header/Header';
-import ShopSidebar from './common/sidebar/Sidebar';
+import ShopHeader from './components/header/Header';
+import ShopSidebar from './components/sidebar/Sidebar';
 import Customer from './components/pages/Customer';
 import Product from './components/pages/Product';
 import Order from './components/pages/Order';
-import AddOrder from './components/pages/AddOrder';
+import AddOrder from './pages/Order/AddOrder';
 import { Layout } from 'antd';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import './App.css';

@@ -76,7 +76,7 @@ const EditTable = (props) => {
     return editingKeys.find((key) => key === record.key) ? true : false;
   };
 
-  const triggerOnChange = (recordKey) => {
+  const triggerOnChange = async (recordKey) => {
     const data = form.getFieldValue(recordKey);
     const dataIndex = dataSourceTable.findIndex((data) => data.key === recordKey);
     const newDataSource = [...dataSourceTable];

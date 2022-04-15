@@ -3,8 +3,8 @@ import { Form, Input, Button, InputNumber, Select, Row, message,} from 'antd';
 import EditTable from '../../common/table/EditTable';
 import { getAllProducts } from '../../api/ProductApi';
 import { getAllCustomers } from '../../api/CustomerApi';
-import CustomerInfo from '../order/CustomerInfo';
-import SelectCustomer from '../order/SelectCustomer';
+import CustomerInfo from './CustomerInfo';
+import SelectCustomer from './SelectCustomer';
 import { useHistory, useParams } from 'react-router-dom';
 import { getOrder, addOrder, updateOrder } from '../../api/OrderApi';
 
