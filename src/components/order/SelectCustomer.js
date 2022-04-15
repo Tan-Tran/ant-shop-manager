@@ -8,7 +8,10 @@ const SelectCustomer = ({ id, customers, onSelect }) => {
     <Row>
       <Col>
         {!id && (
-          <Form.Item name="customer" rules={[{ required: true }]}>
+          <Form.Item
+            name="customer"
+            rules={[{ required: true, message: 'Customer is required' }]}
+          >
             <Select
               showSearch
               style={{ width: 300 }}

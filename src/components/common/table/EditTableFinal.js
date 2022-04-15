@@ -61,6 +61,8 @@ const EditTable = (props) => {
     onDelete,
     onCancel,
     onChange,
+    showAddNewRow = true,
+    useDefaultActionColumn = true,
     ...restProps
   } = props;
 
@@ -132,7 +134,7 @@ const EditTable = (props) => {
     setEditingKeys([]);
   };
 
-  const columnsTable = [
+  const columnsDefault = [
     ...columns,
     {
       title: 'Action',
@@ -149,7 +151,7 @@ const EditTable = (props) => {
                 setDataSourceTable(
                   dataSource.filter((data) => data.key !== record.key)
                 );
-                onDelete(record);
+                cancel(record);
               }}
             >
               Delete
@@ -212,6 +214,11 @@ const EditTable = (props) => {
     setEditingKeys([...editingKeys, key]);
   };
 
+  let columnsTable = columnsDefault;
+  if (!useDefaultActionColumn) {
+    columnsTable.pop();
+  }
+
   const mergeColumns = columnsTable.map((column) => {
     if (!column.editable) {
       return column;
@@ -247,7 +254,9 @@ const EditTable = (props) => {
           {...restProps}
         />
       </Form>
-      <AddNewRowButton addNewRow={addNewRow} title={'Add new row'} />
+      {showAddNewRow && (
+        <AddNewRowButton addNewRow={addNewRow} title={'Add new row'} />
+      )}
     </>
   );
 };

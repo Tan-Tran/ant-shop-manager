@@ -39,10 +39,9 @@ const Customer = () => {
   };
 
   const onDelete = (key) => {
-    deleteCustomer(key).then(() => {
-      setCustomers([...customers].filter((customer) => customer.key !== key));
-      message.success('Delete customer successful');
-    });
+    deleteCustomer(key);
+    setCustomers([...customers].filter((customer) => customer.key !== key));
+    message.success('Delete customer successful');
   };
 
   const columns = [

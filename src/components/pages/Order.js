@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Tag, message } from 'antd';
 import { DeleteOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { useHistory } from 'react-router-dom';
-import Editable from '../common/table/EditTable';
+import Editable from '../common/table/EditTableFinal';
 import { getAllOrders, deleteOrder } from '../api/OrderApi';
 import 'antd/dist/antd.css';
 
@@ -11,32 +11,13 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    getAllOrders().then((data) =>
-      setOrders(
-        Object.keys(data).map((key) => {
-          return {
-            key: key,
-            customerId: data[key].customerId,
-            customerName: data[key].customerName,
-            delivery: data[key].delivery,
-            productNames:  data[key].products? data[key].products.map(
-              (product) => product.productName
-            ): [],
-            total: data[key].products? data[key].products.reduce(
-              (prev, current) => prev + current.total,
-              0
-            ): 0,
-            date: new Date(data[key].createAt).toLocaleDateString('en-US'),
-          };
-        })
-      )
-    );
+    getAllOrders().then(setOrders);
   }, []);
 
-  const removeOrder = async (key) => {
-    deleteOrder(key)
-      .then(() => setOrders([...orders].filter((order) => order.key !== key)))
-      .then(() => message.success('Delete successful'));
+  const onDelete = async (key) => {
+    deleteOrder(key);
+    setOrders([...orders].filter((order) => order.key !== key));
+    message.success('Delete successful');
   };
 
   const columns = [
@@ -49,7 +30,7 @@ const Order = () => {
     {
       title: 'Product',
       dataIndex: 'productNames',
-      width: '600px',
+      width: '300px',
       render: (_, record) => (
         <>
           {record.productNames?.map((productName) => {
@@ -86,7 +67,7 @@ const Order = () => {
       render: (record) => {
         return (
           <Button danger>
-            <DeleteOutlined onClick={() => removeOrder(record.key)} />
+            <DeleteOutlined onClick={() => onDelete(record.key)} />
           </Button>
         );
       },
@@ -99,6 +80,8 @@ const Order = () => {
         columns={columns}
         dataSource={orders}
         pagination={false}
+        showAddNewRow={false}
+        useActionColumnDefault={false}
         onRow={(record) => {
           return {
             onDoubleClick: () => {

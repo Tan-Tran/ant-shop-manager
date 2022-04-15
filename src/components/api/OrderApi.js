@@ -1,8 +1,28 @@
+import callApi from './callApi';
+
 export const getAllOrders = async () => {
-  const response = await fetch(
+  const response = await callApi(
     'https://shop-management-aba6f-default-rtdb.firebaseio.com/orders.json'
   );
-  const data = await response.json();
+  let data = [];
+  if (response) {
+    data = Object.keys(response).map((key) => {
+      return {
+        key: key,
+        customerId: response[key].customerId,
+        customerName: response[key].customerName,
+        delivery: response[key].delivery,
+        productNames: response[key].products?.map(
+          (product) => product.productName
+        ),
+        total: response[key].products?.reduce(
+          (prev, current) => prev + current.total,
+          0
+        ),
+        date: new Date(response[key].createAt).toLocaleDateString('en-US'),
+      };
+    });
+  }
   return data;
 };
 

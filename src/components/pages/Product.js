@@ -37,10 +37,9 @@ const ProductRefactors = () => {
   };
 
   const onDelete = (key) => {
-    deleteProduct(key).then(() => {
-      setProducts([...products].filter((product) => product.key !== key));
-      message.success('Delete product successful');
-    });
+    deleteProduct(key);
+    setProducts([...products].filter((product) => product.key !== key));
+    message.success('Delete product successful');
   };
 
   const columns = [
