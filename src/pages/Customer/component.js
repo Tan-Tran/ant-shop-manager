@@ -1,38 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import { Input, DatePicker, message } from 'antd';
-import EditTable from '../common/table/EditTable';
-import DisableDate from '../format/date/DisableDate';
-import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer } from '../api/CustomerApi';
+import EditTable from '../../components/table/EditTable';
+import DisableDate from '../../utils/date/DisableDate';
+import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer } from '../../api/CustomerApi';
 
-const CustomerTable = () => {
+export const CustomerTable = () => {
   const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
     getAllCustomers().then(setCustomers);
   }, []);
 
-  const onSave = ({ isNew, key, data }) => {
-    if (isNew) {
-      addCustomer(data).then((id) => {
+  const addNewCustomer = (data) =>{
+    addCustomer(data)
+      .then((id) => {
         setCustomers([...customers, { ...data, key: id }]);
         message.success('Add new customer successful');
       });
-      return;
-    }
-    const customerIndex = customers.findIndex((customer) => customer.key === key);
+  }
+
+  const getNewCustomers = (key, data) =>{
     const newCustomers = [...customers];
-    newCustomers[customerIndex] = {...data, key: key};
-    updateCustomer(key, data).then(() => {
-      setCustomers(newCustomers);
-      message.success('Update customer successful');
-    });
+    const customerIndex = [...customers].findIndex((customer) => customer.key === key);
+    newCustomers[customerIndex] = { ...data, key: key };
+    return newCustomers
+  } 
+
+  const updateDataCustomer = (key,data) =>{
+    const newCustomers = getNewCustomers(key, data)
+    updateCustomer(key, data)
+      .then(() => {
+        setCustomers(newCustomers);
+        message.success('Update customer successful');
+      });
+  }
+
+  const onSave = ({ isNew, key, data }) => {
+    isNew? addNewCustomer(data): updateDataCustomer(key, data)
   };
 
   const onDelete = (key) => {
-    deleteCustomer(key);
-    setCustomers([...customers].filter((customer) => customer.key !== key));
-    message.success('Delete customer successful');
+    deleteCustomer(key)
+    .then(() =>{
+      setCustomers([...customers].filter((customer) => customer.key !== key));
+      message.success('Delete customer successful');
+    })
   };
+
+  const isEmptyPhoneNumber = (value) =>{
+    return value === '' || value === undefined
+  }
+
+  const isPhoneNumber = (value) =>{
+    const pattern = /^[0-9]+$/;
+    return pattern.test(value)
+  }
+
+  const checkPhoneNumber = (value) =>{    
+    if (isEmptyPhoneNumber(value)) {
+      return Promise.reject(new Error('Phone must be require!'));
+    }
+    if (!isPhoneNumber(value)) {
+      return Promise.reject(new Error('Phone must be number!'));
+    }
+    return Promise.resolve();
+  }
 
   const columns = [
     {
@@ -96,16 +128,7 @@ const CustomerTable = () => {
         initialValue: '',
         rules: [
           {
-            validator(_, value) {
-              const pattern = /^[0-9]+$/;
-              if (value === '') {
-                return Promise.reject(new Error('Phone must be require!'));
-              }
-              if (!pattern.test(value)) {
-                return Promise.reject(new Error('Phone must be number!'));
-              }
-              return Promise.resolve();
-            },
+            validator:(_,value) => checkPhoneNumber(value)
           },
         ],
       },
@@ -114,7 +137,7 @@ const CustomerTable = () => {
   ];
 
   return (
-    <>
+    <div style={{ padding: 16 }}>
       <EditTable
         columns={columns}
         dataSource={customers}
@@ -122,8 +145,6 @@ const CustomerTable = () => {
         onSave={({ isNew, key, data }) => onSave({ isNew, key, data })}
         onDelete={(key) => onDelete(key)}
       />
-    </>
+    </div>
   );
 };
-
-export default CustomerTable;

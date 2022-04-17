@@ -3,7 +3,7 @@ import {Table,Form,Popconfirm,Typography,Space,DatePicker,message} from 'antd';
 import EditableCell from './EditTableCell';
 import AddNewRowButton from './button/AddNewRowButton';
 import moment from 'moment';
-import { FormatDate_DD_MM_YYY } from '../../format/date/FormatDate';
+import { FormatDate_DD_MM_YYY } from '../../constant/FormatDate';
 
 const convertData = (data, columns) => {
   const outputData = { ...data };
@@ -11,25 +11,7 @@ const convertData = (data, columns) => {
     if (column.inputType === DatePicker) {
       return {
         ...outputData,
-        [`${column.dataIndex}`]: moment(outputData[column.dataIndex]).format(
-          FormatDate_DD_MM_YYY
-        ),
-      };
-    }
-  }
-  return outputData;
-};
-
-const convertDataFormSetFieldSValue = (data, columns) => {
-  const outputData = { ...data };
-  for (const column of columns) {
-    if (column.inputType === DatePicker) {
-      return {
-        ...outputData,
-        [`${column.dataIndex}`]: moment(
-          outputData[column.dataIndex],
-          FormatDate_DD_MM_YYY
-        ),
+        [`${column.dataIndex}`]: moment(outputData[column.dataIndex]).format( FormatDate_DD_MM_YYY),
       };
     }
   }
@@ -41,33 +23,26 @@ const isExistNewRow = (data) => {
 };
 
 const EditTable = (props) => {
-  const { formOutside,columns,dataSource,pagination,type,
-          onSave,onAdd, onUpdate,onDelete,onCancel,
-          showAddNewRow = true,useActionColumnDefault = true,
-    ...restProps
+  const { formOutside, columns, dataSource, pagination, type,
+          onSave, onAdd, onUpdate, onDelete, onCancel, onChange,
+          showAddNewRow = true, useActionColumnDefault = true, rowKey = 'key',
+          ...restProps
   } = props;
 
-  const [formEditTale] = Form.useForm();
-  const [dataSourceTable, setDataSourceTable] = useState(dataSource);
+  const [formEditTable] = Form.useForm();
+  const [dataSourceTable, setDataSourceTable] = useState([]);
   const [editingKeys, setEditingKeys] = useState([]);
-  const form = formOutside || formEditTale;
+  const form = formOutside || formEditTable;
 
   useEffect(() => {
-    setDataSourceTable(dataSource);
-  }, [dataSource]);
-
-  useEffect(() => {
-    if (dataSource && type === 'multiple') {
-      for (const data of dataSource) {
-        form.setFieldsValue({
-          [`${data.key}`]: {
-            ...data,
-            ...convertDataFormSetFieldSValue(data, columns),
-          },
-        });
-      }
+    if(dataSource){
+      setDataSourceTable(dataSource);
     }
   }, [dataSource]);
+
+  useEffect(() =>{
+      onChange?.(form.getFieldsValue())
+  },[dataSourceTable])
 
   const isEditing = (record) => {
     if (type === 'multiple') {
@@ -78,43 +53,35 @@ const EditTable = (props) => {
 
   const triggerOnChange = async (recordKey) => {
     const data = form.getFieldValue(recordKey);
-    const dataIndex = dataSourceTable.findIndex((data) => data.key === recordKey);
+    const dataIndex = dataSourceTable.findIndex((item) => item.key === recordKey);
     const newDataSource = [...dataSourceTable];
     newDataSource[dataIndex] = {
       ...newDataSource[dataIndex],
       ...convertData(data, columns),
     };
-    setDataSourceTable(newDataSource);
+    setDataSourceTable(newDataSource)
   };
 
   const cancel = (record) => {
     if (record.isNew) {
-      setDataSourceTable(
-        [...dataSourceTable].filter((item) => item.key !== record.key)
-      );
+      setDataSourceTable([...dataSourceTable].filter((item) => item.key !== record.key));
     }
     setEditingKeys([...editingKeys].filter((key) => key !== record.key));
   };
 
   const edit = (record) => {
     setEditingKeys([...editingKeys, record.key]);
-    form.setFieldsValue({
-      [`${record.key}`]: {
-        ...record,
-        ...convertDataFormSetFieldSValue(record, columns),
-      },
-    });
   };
 
   const save = async (record) => {
     await form.validateFields()
-    const { isNew, key,...restRecord } = record;
-    onSave({ isNew, key, data: restRecord });
+    const { isNew, key, ...restProps} = record;
+    onSave({ isNew, key, data: restProps });
     setEditingKeys([]);
   };
 
-  const remove = (record) => {
-    onDelete(record.key)
+  const remove = (key) => {
+    onDelete(key)
   }
 
   const addNewRow = () => {
@@ -124,15 +91,17 @@ const EditTable = (props) => {
     }
     const key = Date.now();
     let newData = {
-      key: key,
+      [`${rowKey}`]: key,
       isNew: true,
     };
-    for (const column of columns) {
-      newData[`${column.dataIndex}`] = column.formItemProps?.initialValue;
-    }
     setDataSourceTable([...dataSourceTable, { ...newData }]);
     setEditingKeys([...editingKeys, key]);
   };
+
+  const deleteMultipleMode = async (key) =>{
+    setDataSourceTable([...dataSourceTable].filter((data) => data.key !== key));
+    await form.validateFields()
+  }
 
   const columnsDefault = [
     ...columns,
@@ -147,10 +116,7 @@ const EditTable = (props) => {
         if (type === 'multiple') {
           return (
             <Typography.Link
-              onClick={() => {
-                setDataSourceTable(dataSourceTable.filter((data) => data.key !== record.key));
-                form.validateFields()
-              }}
+              onClick={() => deleteMultipleMode(record.key)}
             >
               Delete
             </Typography.Link>
@@ -160,9 +126,7 @@ const EditTable = (props) => {
           <span>
             <Typography.Link
               onClick={() => save(record)}
-              style={{
-                marginRight: 8,
-              }}
+              style={{marginRight: 8}}
             >
               Save
             </Typography.Link>
@@ -184,7 +148,7 @@ const EditTable = (props) => {
               </Typography.Link>
               <Typography.Link
                 disabled={editingKeys.length !== 0}
-                onClick={() => remove(record.key)}
+                onClick={() =>{remove(record.key)}}
               >
                 Delete
               </Typography.Link>
@@ -208,6 +172,7 @@ const EditTable = (props) => {
       ...column,
       onCell: (record) => ({
         record,
+        form: form,
         editable: column.editable,
         inputType: column.inputType,
         dataIndex: column.dataIndex,
@@ -222,7 +187,7 @@ const EditTable = (props) => {
 
   return (
     <>
-      <Form form={form}>
+      <Form form={form} component={false}>
         <Table
           components={{
             body: {
@@ -233,11 +198,10 @@ const EditTable = (props) => {
           dataSource={dataSourceTable}
           pagination={pagination}
           {...restProps}
+          rowKey={rowKey || 'key'}
         />
       </Form>
-      {showAddNewRow && (
-        <AddNewRowButton addNewRow={addNewRow} title={'Add new row'} />
-      )}
+      {showAddNewRow && (<AddNewRowButton addNewRow={addNewRow} title={'Add new row'} />)}
     </>
   );
 };

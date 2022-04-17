@@ -1,36 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
-import EditTable from '../common/table/EditTable';
-import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../api/ProductApi';
+import EditTable from '../../components/table/EditTable';
+import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../../api/ProductApi';
 
-const ProductTable = () => {
+export const ProductTable = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     getAllProducts().then(setProducts);
   }, []);
 
-  const onSave = ({ isNew, key, data }) => {
-    if (isNew) {
-      addProduct(data).then((id) => {
+  const saveNewProduct = (data) =>{
+    addProduct(data)
+      .then((id) => {
         setProducts([...products, { ...data, key: id }]);
         message.success('Add new product successful');
       });
-      return;
-    }
-    const productIndex = products.findIndex((product) => product.key === key);
+  }
+
+
+  const getNewProducts = (key, data) =>{
     const newProducts = [...products];
+    const productIndex = products.findIndex((product) => product.key === key);
     newProducts[productIndex] = {...data, key: key};
-    updateProduct(key, data).then(() => {
-      setProducts(newProducts);
-      message.success('Update product successful');
-    });
+    return newProducts
+  }
+
+  const updateDataProduct = (key, data) =>{
+    const newProducts = getNewProducts(key, data)
+    updateProduct(key, data)
+      .then(() => {
+        setProducts(newProducts);
+        message.success('Update product successful');
+      });
+  }
+
+  const onSave = ({ isNew, key, data }) => {
+    isNew? saveNewProduct(data): updateDataProduct(key, data)
   };
 
   const onDelete = (key) => {
-    deleteProduct(key);
     setProducts([...products].filter((product) => product.key !== key));
     message.success('Delete product successful');
+    deleteProduct(key);
   };
 
   const columns = [
@@ -116,7 +128,7 @@ const ProductTable = () => {
   ];
 
   return (
-    <>
+    <div style={{ padding: 16 }}>
       <EditTable
         columns={columns}
         dataSource={products}
@@ -124,8 +136,6 @@ const ProductTable = () => {
         onSave={({ isNew, key, data }) => onSave({ isNew, key, data })}
         onDelete={(key) => onDelete(key)}
       />
-    </>
+    </div>
   );
 };
-
-export default ProductTable;

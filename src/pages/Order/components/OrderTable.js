@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Tag, message, Typography} from 'antd';
+import { Button, Tag, message, Popconfirm} from 'antd';
 import { PlusCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useHistory } from 'react-router-dom';
-import Editable from '../common/table/EditTable';
-import { getAllOrders, deleteOrder } from '../api/OrderApi';
+import Editable from '../../../components/table/EditTable';
+import { getAllOrders, deleteOrder } from '../../../api/OrderApi';
 import 'antd/dist/antd.css';
 
-const OrderTable = () => {
+export const OrderTable = () => {
   const history = useHistory();
   const [orders, setOrders] = useState([]);
 
@@ -14,7 +14,7 @@ const OrderTable = () => {
     getAllOrders().then(setOrders);
   }, []);
 
-  const onDelete = async (key) => {
+  const onDelete = (key) => {
     setOrders([...orders].filter((order) => order.key !== key));
     message.success('Delete successful');
     deleteOrder(key);
@@ -66,16 +66,19 @@ const OrderTable = () => {
       dataIndex: '',
       render: (_,record) => {
         return (
-          <Button danger onClick={() => onDelete(record.key)}>
-            <DeleteOutlined  />
-          </Button>
+          <Popconfirm
+              title="Sure to cancel?"
+              onConfirm={() => onDelete(record.key)}
+            >
+              <Button icon={<DeleteOutlined />}/>
+          </Popconfirm>          
         );
       },
     },
   ];
 
   return (
-    <>
+    <div style={{ padding: 16 }}>
       <Editable
         columns={columns}
         dataSource={orders}
@@ -95,8 +98,7 @@ const OrderTable = () => {
           <PlusCircleOutlined /> Add new order
         </Button>
       </div>
-    </>
+    </div>
   );
 };
-
-export default OrderTable;
+export default OrderTable
