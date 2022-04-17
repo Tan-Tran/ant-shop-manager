@@ -1,5 +1,5 @@
-import { CustomerTable } from "./component"
 
+import CustomerTable from "./CustomerTable"
 const Customer = () =>{
     return <CustomerTable/>
 }

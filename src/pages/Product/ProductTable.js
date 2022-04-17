@@ -139,3 +139,5 @@ export const ProductTable = () => {
     </div>
   );
 };
+
+export default ProductTable

@@ -1,5 +1,4 @@
-import { ProductTable } from "./component";
-
+import ProductTable from "./ProductTable";
 const Product = () =>{
     return <ProductTable/>
 }
