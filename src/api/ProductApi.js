@@ -1,7 +1,7 @@
 import callFetchApi from './callFetchApi';
 
 export const getAllProducts = async () => {
-  const response = await callFetchApi('https://shop-database-e29d3-default-rtdb.firebaseio.com/products.json');
+  const response = await callFetchApi('https://shop-database-e29d3-default-rtdb.firebaseio.com/products.json') || {};
   return Object.keys(response).map((key) => ({
     ...response[key],
     key: key,
