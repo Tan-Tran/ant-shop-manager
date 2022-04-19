@@ -6,6 +6,7 @@ import SelectCustomer from './SelectCustomer';
 import { addOrder, getOrder, updateOrder } from '../../../api/OrderApi';
 import { getAllProducts } from '../../../api/ProductApi';
 import { getAllCustomers } from '../../../api/CustomerApi';
+import moment from 'moment';
 
 const OrderForm = (props) => {
   const {orderId} = props
@@ -160,7 +161,7 @@ const OrderForm = (props) => {
     },
     {
       title: 'Notes',
-      dataIndex: 'desc',
+      dataIndex: 'description',
       inputType: Input,
       editable: true,
       width: '200px',
@@ -174,21 +175,21 @@ const OrderForm = (props) => {
 
   const dataOrderPage = () =>{
     const {customerId, delivery, productsOfOrder} = formOrderPage.getFieldsValue()
+    const customer = customersJson[customerId]
     const productsOrderData = Object.values(productsOfOrder).map((item) =>{
       const product = productsJson[item.productId]
       return {
-        ...product,
+        product: product,
         quantity: item.quantity,
         total: product.price * item.quantity,
-        desc: item.desc
+        description: item.description
       }
     })
     const data = {
-      customerId: customerId,
+      customerDTO: {...customer, dateOfBirth: moment(customer.dateOfBirth, "DD/MM/YYYY").toDate(),},
       delivery: delivery,
-      customerName: customersJson[customerId].name,
       createAt: new Date(),
-      products: productsOrderData
+      orderItemsList: productsOrderData
     }
     return data
   }

@@ -1,28 +1,29 @@
 import callFetchApi from './callFetchApi';
-// import moment from 'moment';
-// import { FormatDate_DD_MM_YYY } from '../constant/FormatDate';
+const url = "http://localhost:8080/customer"
 
 export const getAllCustomers = async () => {
-  const response = await callFetchApi('https://shop-database-e29d3-default-rtdb.firebaseio.com/customers.json') || {};
-  return Object.keys(response).map((key) => ({
-   ...response[key],
-   key: key,
-  }),[])
+  const response = await callFetchApi(url) || [];
+  return response.map(customer => {
+    return {
+        ...customer,
+        key: customer?.id,
+        dateOfBirth: new Date(customer.dateOfBirth).toLocaleDateString('en-GB')
+      }
+    })
 };
 
 export const getCustomer = async (key) => {
-  return await callFetchApi(`https://shop-database-e29d3-default-rtdb.firebaseio.com/customers/${key}.json`);
+  return await callFetchApi(`${url}/${key}`);
 };
 
 export const addCustomer = async (data) => {
-  const response = await callFetchApi('https://shop-database-e29d3-default-rtdb.firebaseio.com/customers.json','POST',data);
-  return response.name;
+  return await callFetchApi(url,'POST',data);
 };
 
 export const updateCustomer = async (key, data) => {
-  await callFetchApi(`https://shop-database-e29d3-default-rtdb.firebaseio.com/customers/${key}.json`,'PUT',data);
+  await callFetchApi(`${url}/${key}`,'PUT',data);
 };
 
 export const deleteCustomer = async (key) => {
-  await callFetchApi(`https://shop-database-e29d3-default-rtdb.firebaseio.com/customers/${key}.json`,'DELETE');
+  await callFetchApi(`${url}/${key}`,'DELETE');
 };

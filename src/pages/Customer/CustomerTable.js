@@ -3,6 +3,7 @@ import { Input, DatePicker, message } from 'antd';
 import EditTable from '../../components/table/EditTable';
 import DisableDate from '../../utils/date/DisableDate';
 import { getAllCustomers, updateCustomer, addCustomer, deleteCustomer } from '../../api/CustomerApi';
+import moment from 'moment';
 
 export const CustomerTable = () => {
   const [customers, setCustomers] = useState([]);
@@ -12,7 +13,11 @@ export const CustomerTable = () => {
   }, []);
 
   const addNewCustomer = (data) =>{
-    addCustomer(data)
+    const covertData = {
+      ...data,
+      dateOfBirth: moment(data.dateOfBirth, "DD/MM/YYYY").toDate(),
+    }
+    addCustomer(covertData)
       .then((id) => {
         setCustomers([...customers, { ...data, key: id }]);
         message.success('Add new customer successful');
@@ -27,8 +32,12 @@ export const CustomerTable = () => {
   } 
 
   const updateDataCustomer = (key,data) =>{
+    const covertData = {
+      ...data,
+      dateOfBirth: moment(data.dateOfBirth, "DD/MM/YYYY").toDate(),
+    }
     const newCustomers = getNewCustomers(key, data)
-    updateCustomer(key, data)
+    updateCustomer(key, covertData)
       .then(() => {
         setCustomers(newCustomers);
         message.success('Update customer successful');

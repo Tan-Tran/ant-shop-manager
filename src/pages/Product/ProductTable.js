@@ -118,7 +118,7 @@ export const ProductTable = () => {
     },
     {
       title: 'Description',
-      dataIndex: 'desc',
+      dataIndex: 'description',
       inputType: Input,
       editable: true,
       formItemProps: {
