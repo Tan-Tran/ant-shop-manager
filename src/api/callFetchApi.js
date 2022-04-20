@@ -6,7 +6,6 @@ const callFetchApi = async (url, method='GET', body) =>{
         },
         body: JSON.stringify(body),
     })
-    console.log(response)
     return response.json()
 }
 

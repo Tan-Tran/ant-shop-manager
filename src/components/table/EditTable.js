@@ -89,7 +89,7 @@ const EditTable = (props) => {
       message.warn('Please complete add current row');
       return;
     }
-    const key = Date.now();
+    const key = 'new_'+Date.now();
     let newData = {
       [`${rowKey}`]: key,
       isNew: true,

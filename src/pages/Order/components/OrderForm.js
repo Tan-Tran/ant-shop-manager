@@ -26,15 +26,17 @@ const OrderForm = (props) => {
   useEffect(() =>{
     if(orderId && customers && products){
       getOrder(orderId).then((data) => {
+        const {customer, delivery, orderItemsList} = data
         formOrderPage.setFieldsValue({
-          customerId: data['customerId'],
-          delivery: data['delivery'],
+          customerId: customer?.id,
+          delivery: delivery,
         });
-        setCustomer(customersJson[data['customerId']]);
-        setProductsOfOrder(data['products'].map((product) => {
+        setCustomer(customersJson[customer?.id]);
+        setProductsOfOrder(orderItemsList?.map((product) => {
             return {
-              key: product.key,
-              productId: product.key,
+              key: product.id,
+              id: product.id,
+              productId: product.productId,
               ...product,
             };
           })
@@ -176,17 +178,18 @@ const OrderForm = (props) => {
   const dataOrderPage = () =>{
     const {customerId, delivery, productsOfOrder} = formOrderPage.getFieldsValue()
     const customer = customersJson[customerId]
-    const productsOrderData = Object.values(productsOfOrder).map((item) =>{
-      return {
-        productId: item.productId,
-        quantity: item.quantity,
-        description: item.description
-      }
+    const productsOrderData = Object.keys(productsOfOrder).map((key) =>{
+        return {
+          id: !key.includes("new")? parseInt(key): '',
+          productId: productsOfOrder[key].productId,
+          quantity: productsOfOrder[key].quantity,
+          description: productsOfOrder[key].description
+      }     
     })
     const data = {
       customerDTO: {...customer, dateOfBirth: moment(customer.dateOfBirth, "DD/MM/YYYY").toDate(),},
       delivery: delivery,
-      // createAt: new Date(),
+      createAt: new Date(),
       orderItemsList: productsOrderData
     }
     return data

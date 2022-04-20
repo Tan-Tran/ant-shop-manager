@@ -4,18 +4,50 @@ import { PlusCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useHistory } from 'react-router-dom';
 import Editable from '../../../components/table/EditTable';
 import { getAllOrders, deleteOrder } from '../../../api/OrderApi';
+import { getAllProducts } from '../../../api/ProductApi';
 import 'antd/dist/antd.css';
 
 export const OrderTable = () => {
   const history = useHistory();
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [dataSource, setDataSource] = useState([]);
 
   useEffect(() => {
     getAllOrders().then(setOrders);
+    getAllProducts().then(setProducts);
   }, []);
 
+  useEffect(() => {
+    if(orders.length !==0 && products.length !== 0){
+      const productsJson = products.reduce((map, product) => {
+        map[product.key] = product
+        return map
+      },{})
+      const data = orders.map((order) =>{
+        const productsData = order?.orderItemsList.map((item) =>{
+          return {
+            productName: productsJson[item.productId].name,
+            total: productsJson[item.productId].price * item.quantity
+          }
+        })
+        return{
+          key: order.id,
+          customerName: order?.customerDTO.name,
+          delivery: order?.delivery,
+          date: new Date(order?.createAt).toLocaleDateString('en-GB'),
+          productNames: productsData.map((item) => {
+            return item.productName
+          }),
+          total: productsData.reduce((prev, current) => prev + current.total, 0)
+        }
+      })
+      setDataSource(data)
+    }
+  },[orders, products]);
+
   const onDelete = (key) => {
-    setOrders([...orders].filter((order) => order.key !== key));
+    setDataSource([...dataSource].filter((data) => data.key !== key));
     message.success('Delete successful');
     deleteOrder(key);
   };
@@ -81,7 +113,7 @@ export const OrderTable = () => {
     <div style={{ padding: 16 }}>
       <Editable
         columns={columns}
-        dataSource={orders}
+        dataSource={dataSource}
         pagination={false}
         showAddNewRow={false}
         useActionColumnDefault={false}

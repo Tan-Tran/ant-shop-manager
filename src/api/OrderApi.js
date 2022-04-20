@@ -2,14 +2,7 @@ import callFetchApi from './callFetchApi';
 const url = "http://localhost:8080/order"
 
 export const getAllOrders = async () => {
-  const response = await callFetchApi(url) || [];
-  return response.map((key) => ({
-    ...response,
-    key: response.id,
-    productNames: response.products?.map((product) => product.name),
-    total: response.products?.reduce((prev, current) => prev + current.total,0),
-    date: new Date(response.createAt).toLocaleDateString('en-GB'),
-   }),[])
+  return await callFetchApi(url) || [];
 };
 
 export const getOrder = async (key) => {
