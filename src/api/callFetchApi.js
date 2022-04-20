@@ -1,5 +1,4 @@
 const callFetchApi = async (url, method='GET', body) =>{
-    console.log(url, method, body);
     const response = await fetch(url,{
         method: method,
         headers: {
@@ -7,6 +6,7 @@ const callFetchApi = async (url, method='GET', body) =>{
         },
         body: JSON.stringify(body),
     })
+    console.log(response)
     return response.json()
 }
 

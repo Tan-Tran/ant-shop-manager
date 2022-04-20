@@ -177,18 +177,16 @@ const OrderForm = (props) => {
     const {customerId, delivery, productsOfOrder} = formOrderPage.getFieldsValue()
     const customer = customersJson[customerId]
     const productsOrderData = Object.values(productsOfOrder).map((item) =>{
-      const product = productsJson[item.productId]
       return {
-        product: product,
+        productId: item.productId,
         quantity: item.quantity,
-        total: product.price * item.quantity,
         description: item.description
       }
     })
     const data = {
       customerDTO: {...customer, dateOfBirth: moment(customer.dateOfBirth, "DD/MM/YYYY").toDate(),},
       delivery: delivery,
-      createAt: new Date(),
+      // createAt: new Date(),
       orderItemsList: productsOrderData
     }
     return data
