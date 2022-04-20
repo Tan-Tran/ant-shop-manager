@@ -20,7 +20,7 @@ function App() {
           <Header>
             <ShopHeader />
           </Header>
-          <Layout>
+          <Layout style={{height:"100vh"}}>
             <ShopSidebar />
             <Content>
               <Switch>
