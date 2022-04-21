@@ -7,11 +7,11 @@ export const ProductTable = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    getAllProducts().then(setProducts);
+    getAllProducts().then((data) => setProducts(data.filter((item) => item.display !== false)));
   }, []);
 
   const saveNewProduct = (data) =>{
-    addProduct(data)
+    addProduct({...data, display: true})
       .then((id) => {
         setProducts([...products, { ...data, key: id }]);
         message.success('Add new product successful');
@@ -40,9 +40,10 @@ export const ProductTable = () => {
   };
 
   const onDelete = (key) => {
+    const product = products.find(product => product.key === key)
+    updateProduct(key, {...product, display: false})
     setProducts([...products].filter((product) => product.key !== key));
     message.success('Delete product successful');
-    deleteProduct(key);
   };
 
   const columns = [

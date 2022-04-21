@@ -19,7 +19,7 @@ const OrderForm = (props) => {
   const [formProducts] = Form.useForm();
 
   useEffect(() => {
-    getAllProducts().then(setProducts);
+    getAllProducts().then((data) => setProducts(data.filter((item) => item.display !== false)));
     getAllCustomers().then(setCustomers);
   }, []);
 
