@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
+import { FilePdfOutlined } from '@ant-design/icons';
 import { Form, Input, Button, InputNumber, Select, message,} from 'antd';
 import EditTable from '../../../components/table/EditTable';
 import SelectCustomer from './SelectCustomer';
 import { addOrder, getOrder, updateOrder } from '../../../api/OrderApi';
 import { getAllProducts } from '../../../api/ProductApi';
 import { getAllCustomers } from '../../../api/CustomerApi';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useParams,
+  useRouteMatch
+} from "react-router-dom";
 import moment from 'moment';
 
 const OrderForm = (props) => {
@@ -17,6 +26,7 @@ const OrderForm = (props) => {
   const [customer, setCustomer] = useState(null);
   const [productsOfOrder, setProductsOfOrder] = useState([]);
   const [formProducts] = Form.useForm();
+  let {url } = useRouteMatch();
 
   useEffect(() => {
     getAllProducts().then((data) => setProducts(data.filter((item) => item.display !== false)));
@@ -234,6 +244,7 @@ const OrderForm = (props) => {
           </Button>
         </Form.Item>
       </Form>
+      <Link to={`${url}/pdf`}><FilePdfOutlined /></Link>
     </div>
   );
 };

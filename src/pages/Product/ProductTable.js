@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, message, InputNumber } from 'antd';
 import EditTable from '../../components/table/EditTable';
-import { getAllProducts,updateProduct,addProduct,deleteProduct } from '../../api/ProductApi';
+import { getAllProducts,updateProduct,addProduct } from '../../api/ProductApi';
 
 export const ProductTable = () => {
   const [products, setProducts] = useState([]);
