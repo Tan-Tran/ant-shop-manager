@@ -192,15 +192,18 @@ const OrderForm = (props) => {
         return {
           id: !key.includes("new")? parseInt(key): '',
           productId: productsOfOrder[key].productId,
+          name: productsJson[productsOfOrder[key].productId].name,
+          price: productsJson[productsOfOrder[key].productId].price,
           quantity: productsOfOrder[key].quantity,
-          description: productsOfOrder[key].description
+          description: productsOfOrder[key].description,
+          total: productsJson[productsOfOrder[key].productId].price * productsOfOrder[key].quantity,
       }     
     })
     const data = {
       customerDTO: {...customer, dateOfBirth: moment(customer.dateOfBirth, "DD/MM/YYYY").toDate(),},
       delivery: delivery,
       createAt: new Date(),
-      orderItemsList: productsOrderData
+      orderItemsList: productsOrderData,
     }
     return data
   }
