@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+// import { useHistory } from 'react-router-dom';
 import { Form, Input, Button, InputNumber, Select, message,} from 'antd';
 import EditTable from '../../../components/table/EditTable';
 import SelectCustomer from './SelectCustomer';
@@ -7,6 +7,15 @@ import { addOrder, getOrder, updateOrder } from '../../../api/OrderApi';
 import { getAllProducts } from '../../../api/ProductApi';
 import { getAllCustomers } from '../../../api/CustomerApi';
 import moment from 'moment';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useParams,
+  useRouteMatch,
+  useHistory
+} from "react-router-dom";
 
 const OrderForm = (props) => {
   const {orderId} = props
@@ -17,6 +26,7 @@ const OrderForm = (props) => {
   const [customer, setCustomer] = useState(null);
   const [productsOfOrder, setProductsOfOrder] = useState([]);
   const [formProducts] = Form.useForm();
+  let { url } = useRouteMatch();
 
   useEffect(() => {
     getAllProducts().then(setProducts);
@@ -234,6 +244,7 @@ const OrderForm = (props) => {
           </Button>
         </Form.Item>
       </Form>
+      {orderId && <Link to={`${url}/pdf`}>Print PDF</Link>}
     </div>
   );
 };
