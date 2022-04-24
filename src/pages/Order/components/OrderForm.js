@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, InputNumber, Select, message,} from 'antd';
 import EditTable from '../../../components/table/EditTable';
 import SelectCustomer from './SelectCustomer';
-import { addOrder, getOrder, updateOrder } from '../../../api/OrderApi';
+import { addOrder, getOrder, updateOrder, getOrderDetailPdf } from '../../../api/OrderApi';
 import { getAllProducts } from '../../../api/ProductApi';
 import { getAllCustomers } from '../../../api/CustomerApi';
 import moment from 'moment';
@@ -245,9 +245,9 @@ const OrderForm = (props) => {
           <Button type="primary" htmlType="submit">
             Checkout
           </Button>
+          {orderId && <Button type="primary" style={{float:"right"}} onClick={() => getOrderDetailPdf(orderId)}>Print PDF</Button>}
         </Form.Item>
       </Form>
-      {orderId && <Link to={`${url}/pdf`}>Print PDF</Link>}
     </div>
   );
 };
