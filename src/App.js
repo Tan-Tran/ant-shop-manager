@@ -39,7 +39,7 @@ function App() {
                 <Route path="/order/new">
                   <AddOrder />
                 </Route>
-                <Route path="/order/:id">
+                <Route path="/order/:id" exact>
                   <UpdateOrder />
                 </Route>
               </Switch>

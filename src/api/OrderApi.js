@@ -20,3 +20,15 @@ export const updateOrder = async (key, data) => {
 export const deleteOrder = async (key) => {
   await callFetchApi(`${url}/${key}`,'DELETE');
 };
+
+export const getOrderDetailPdf = async (orderId) => {
+  const linkDownload = document.createElement("a");
+  const response = await fetch(url + `/${orderId}/pdf`);
+  const file = new Blob([await response.arrayBuffer()], {
+    type: "application/pdf",
+  });
+  const fileURL = URL.createObjectURL(file);
+  linkDownload.href = fileURL;
+  linkDownload.download = `order${orderId}.pdf`;
+  linkDownload.click();
+};
